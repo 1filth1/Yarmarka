@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ярмарка CRM — Система управления заявками</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+    --primary: #10b981; --primary-hover: #059669; --primary-light: #d1fae5; --primary-dark: #047857;
+    --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --info: #3b82f6;
+    --bg: #f0fdf4; --card: #ffffff; --text: #1f2937; --text-light: #6b7280; --text-muted: #9ca3af;
+    --border: #d1fae5; --sidebar: #064e3b; --sidebar-hover: #065f46;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+[data-theme="dark"] {
+    --bg: #022c22; --card: #064e3b; --text: #ecfdf5; --text-light: #a7f3d0; --text-muted: #6ee7b7;
+    --border: #065f46; --sidebar: #022c22; --sidebar-hover: #064e3b; --primary-light: #065f46;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; font-size: 14px; transition: background 0.2s, color 0.2s; }
+
+/* ============ LOGIN SCREEN ============ */
+.login-screen {
+    position: fixed; inset: 0; z-index: 9999;
+    background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #10b981 100%);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+}
+.login-screen::before {
+    content: ''; position: absolute; inset: 0;
+    background-image: radial-gradient(circle at 20% 30%, rgba(52, 211, 153, 0.3) 0%, transparent 50%),
+                      radial-gradient(circle at 80% 70%, rgba(16, 185, 129, 0.2) 0%, transparent 50%);
+}
+.login-container {
+    position: relative; background: white; border-radius: 16px;
+    width: 100%; max-width: 440px; padding: 35px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+}
+[data-theme="dark"] .login-container { background: #064e3b; }
+.login-logo {
+    width: 64px; height: 64px; margin: 0 auto 15px;
+    background: linear-gradient(135deg, #10b981, #34d399);
+    border-radius: 16px; display: flex; align-items: center; justify-content: center;
+    font-size: 32px; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+}
+.login-title { text-align: center; font-size: 22px; font-weight: 700; color: #064e3b; margin-bottom: 5px; }
+[data-theme="dark"] .login-title { color: #ecfdf5; }
+.login-subtitle { text-align: center; font-size: 13px; color: var(--text-light); margin-bottom: 25px; }
+.login-tabs { display: flex; gap: 5px; margin-bottom: 20px; background: var(--bg); padding: 4px; border-radius: 8px; }
+.login-tab { flex: 1; padding: 9px; text-align: center; cursor: pointer; border-radius: 6px; font-size: 13px; font-weight: 500; color: var(--text-light); transition: all 0.15s; }
+.login-tab.active { background: var(--primary); color: white; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3); }
+.login-form { display: none; }
+.login-form.active { display: block; }
+.login-field { margin-bottom: 14px; }
+.login-field label { display: block; font-size: 12px; font-weight: 500; margin-bottom: 5px; color: var(--text); }
+.login-field input, .login-field select {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 14px; background: var(--card); color: var(--text); font-family: inherit;
+}
+.login-field input:focus, .login-field select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15); }
+.pin-input {
+    letter-spacing: 12px; text-align: center; font-size: 22px; font-weight: 600;
+    font-family: 'Courier New', monospace;
+}
+.pin-input::-webkit-outer-spin-button, .pin-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.login-btn {
+    width: 100%; padding: 11px; background: var(--primary); color: white; border: none;
+    border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: all 0.15s; margin-top: 5px;
+}
+.login-btn:hover { background: var(--primary-hover); }
+.login-btn.secondary { background: transparent; color: var(--primary); border: 1px solid var(--primary); margin-top: 10px; }
+.login-btn.secondary:hover { background: var(--primary-light); }
+.login-error { background: #fee2e2; color: #991b1b; padding: 10px; border-radius: 6px; font-size: 12px; margin-bottom: 12px; display: none; }
+.login-error.show { display: block; }
+.login-hint { font-size: 11px; color: var(--text-muted); margin-top: 15px; text-align: center; padding-top: 15px; border-top: 1px solid var(--border); }
+.user-picker { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; margin-bottom: 12px; padding: 4px; border: 1px solid var(--border); border-radius: 8px; }
+.user-pick-item {
+    padding: 10px 12px; border-radius: 6px; cursor: pointer;
+    display: flex; align-items: center; gap: 10px; transition: all 0.15s;
+    border: 1px solid transparent;
+}
+.user-pick-item:hover { background: var(--bg); }
+.user-pick-item.selected { background: var(--primary-light); border-color: var(--primary); }
+.user-pick-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: linear-gradient(135deg, #10b981, #34d399); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600; flex-shrink: 0;
+}
+.user-pick-info { flex: 1; min-width: 0; }
+.user-pick-name { font-size: 13px; font-weight: 500; }
+.user-pick-role { font-size: 10px; color: var(--text-light); }
+.user-pick-badge { font-size: 9px; padding: 2px 6px; border-radius: 8px; background: var(--primary); color: white; font-weight: 600; }
+
+/* ============ MAIN APP ============ */
+.sidebar { width: 240px; background: var(--sidebar); color: white; position: fixed; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; z-index: 100; }
+.sidebar-header { padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, #10b981, #34d399); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4); }
+.sidebar-header h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+.sidebar-header .version { font-size: 10px; color: #6ee7b7; margin-left: 4px; font-weight: 500; }
+.nav-section { padding: 12px 0; }
+.nav-section-title { padding: 0 20px 6px; font-size: 10px; text-transform: uppercase; color: #6ee7b7; letter-spacing: 0.5px; font-weight: 600; }
+.nav-item { padding: 9px 20px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,0.85); font-size: 13px; border-left: 3px solid transparent; }
+.nav-item:hover { background: var(--sidebar-hover); color: white; }
+.nav-item.active { background: linear-gradient(90deg, rgba(16, 185, 129, 0.25), transparent); color: white; border-left-color: #34d399; font-weight: 500; }
+.nav-icon { font-size: 15px; width: 20px; text-align: center; }
+.badge { margin-left: auto; background: #ef4444; color: white; padding: 1px 7px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+.sidebar-footer { margin-top: auto; padding: 12px 15px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px; }
+.user-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #34d399); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; flex-shrink: 0; }
+.user-info { flex: 1; min-width: 0; }
+.user-name { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-role { font-size: 10px; color: #6ee7b7; }
+.logout-btn { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; padding: 4px 8px; border-radius: 5px; font-size: 11px; cursor: pointer; transition: all 0.15s; }
+.logout-btn:hover { background: rgba(239, 68, 68, 0.2); border-color: #ef4444; }
+
+.main-content { margin-left: 240px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; width: calc(100% - 240px); }
+.topbar { background: var(--card); padding: 12px 25px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 15px; position: sticky; top: 0; z-index: 50; }
+.topbar-title { font-size: 17px; font-weight: 600; color: var(--primary-dark); }
+.topbar-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.search-global { position: relative; }
+.search-global input { padding: 7px 12px 7px 32px; border: 1px solid var(--border); border-radius: 6px; width: 260px; font-size: 13px; background: var(--bg); color: var(--text); }
+.search-global::before { content: '🔍'; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 12px; }
+.icon-btn { width: 34px; height: 34px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 15px; position: relative; color: var(--text); }
+.icon-btn:hover { background: var(--bg); }
+.page { display: none; flex: 1; }
+.page.active { display: flex; flex-direction: column; }
+.btn { padding: 7px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.15s; display: inline-flex; align-items: center; gap: 5px; font-family: inherit; color: var(--text); background: var(--card); border: 1px solid var(--border); }
+.btn:hover { background: var(--bg); }
+.btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-danger { background: var(--danger); color: white; border-color: var(--danger); }
+.btn-warning { background: var(--warning); color: white; border-color: var(--warning); }
+.btn-ghost { background: transparent; border-color: transparent; color: var(--text-light); }
+.btn-ghost:hover { background: var(--bg); color: var(--text); }
+.btn-small { padding: 4px 9px; font-size: 12px; }
+
+/* Tickets layout */
+.tickets-layout { display: flex; flex: 1; overflow: hidden; }
+.tickets-list-panel { width: 42%; border-right: 1px solid var(--border); background: var(--card); display: flex; flex-direction: column; overflow: hidden; }
+.tickets-detail-panel { flex: 1; background: var(--bg); overflow-y: auto; }
+.tickets-toolbar { padding: 10px 15px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: center; background: var(--card); }
+.tickets-filters { padding: 10px 15px; border-bottom: 1px solid var(--border); background: var(--card); }
+.filter-tabs { display: flex; gap: 3px; margin-bottom: 8px; flex-wrap: wrap; }
+.filter-tab { padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; color: var(--text-light); transition: all 0.15s; display: flex; align-items: center; gap: 5px; }
+.filter-tab:hover { background: var(--bg); color: var(--text); }
+.filter-tab.active { background: var(--primary-light); color: var(--primary-dark); font-weight: 500; }
+.filter-tab .count { background: var(--border); padding: 0 6px; border-radius: 8px; font-size: 10px; font-weight: 600; }
+.filter-tab.active .count { background: var(--primary); color: white; }
+.filter-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.filter-row select { padding: 5px 8px; border: 1px solid var(--border); border-radius: 5px; font-size: 12px; background: var(--card); color: var(--text); font-family: inherit; }
+.tickets-list { flex: 1; overflow-y: auto; }
+.ticket-item { padding: 12px 15px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; display: flex; gap: 10px; }
+.ticket-item:hover { background: var(--bg); }
+.ticket-item.active { background: var(--primary-light); border-left: 3px solid var(--primary); padding-left: 12px; }
+.ticket-priority-bar { width: 3px; border-radius: 2px; flex-shrink: 0; }
+.priority-low { background: #9ca3af; } .priority-medium { background: #3b82f6; }
+.priority-high { background: #f59e0b; } .priority-urgent { background: #ef4444; }
+.ticket-content { flex: 1; min-width: 0; }
+.ticket-header { display: flex; justify-content: space-between; margin-bottom: 3px; }
+.ticket-number { font-size: 10px; color: var(--text-muted); font-family: monospace; }
+.ticket-time { font-size: 10px; color: var(--text-muted); }
+.ticket-subject { font-size: 13px; margin-bottom: 3px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ticket-preview { font-size: 11px; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; }
+.ticket-meta { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+.badge-status, .badge-priority { padding: 1px 7px; border-radius: 8px; font-size: 10px; font-weight: 500; }
+.status-new { background: #d1fae5; color: #065f46; }
+.status-open { background: #fef3c7; color: #92400e; }
+.status-pending { background: #e0e7ff; color: #3730a3; }
+.status-solved { background: #a7f3d0; color: #064e3b; font-weight: 600; }
+.status-closed { background: #e5e7eb; color: #374151; }
+
+.ticket-detail-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); padding: 40px; text-align: center; }
+.empty-icon { font-size: 60px; margin-bottom: 15px; opacity: 0.3; }
+.ticket-detail { padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+.ticket-detail-header { background: var(--card); padding: 15px; border-radius: 8px; border: 1px solid var(--border); }
+.ticket-detail-title { font-size: 18px; font-weight: 600; margin: 6px 0; }
+.ticket-detail-body { display: grid; grid-template-columns: 1fr 260px; gap: 15px; }
+.conversation { background: var(--card); border-radius: 8px; border: 1px solid var(--border); padding: 15px; }
+.conversation-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.message { padding: 10px 12px; border-radius: 6px; margin-bottom: 10px; border-left: 3px solid; }
+.message-client { background: #f0fdf4; border-left-color: var(--info); }
+.message-agent { background: var(--primary-light); border-left-color: var(--primary); }
+.message-system { background: var(--bg); border-left-color: var(--text-muted); font-size: 11px; color: var(--text-light); }
+.message-header { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 11px; }
+.message-author { font-weight: 600; }
+.message-time { color: var(--text-muted); }
+.message-body { font-size: 13px; line-height: 1.5; white-space: pre-wrap; }
+.reply-box { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; }
+.reply-box textarea { width: 100%; min-height: 80px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 13px; resize: vertical; background: var(--card); color: var(--text); }
+.reply-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+
+.ticket-sidebar { display: flex; flex-direction: column; gap: 12px; }
+.info-card { background: var(--card); border-radius: 8px; border: 1px solid var(--border); padding: 12px; }
+.info-card-title { font-size: 10px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; margin-bottom: 10px; font-weight: 600; }
+.info-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 12px; border-bottom: 1px solid var(--border); }
+.info-row:last-child { border-bottom: none; }
+.info-row-label { color: var(--text-light); }
+.info-row select { padding: 3px 6px; border: 1px solid var(--border); border-radius: 4px; font-size: 11px; background: var(--card); color: var(--text); font-family: inherit; max-width: 130px; }
+.client-card { display: flex; gap: 8px; align-items: center; padding: 6px 0; }
+.client-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #34d399); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; flex-shrink: 0; }
+.client-info { flex: 1; min-width: 0; }
+.client-name { font-weight: 600; font-size: 12px; }
+.client-email { font-size: 11px; color: var(--text-light); }
+
+.btn-resolve { background: var(--success); color: white; border-color: var(--success); padding: 8px 16px; font-weight: 600; border: none; border-radius: 6px; cursor: pointer; }
+.btn-postpone { background: var(--warning); color: white; border-color: var(--warning); padding: 8px 16px; font-weight: 600; border: none; border-radius: 6px; cursor: pointer; }
+.ticket-action-bar { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+/* Modal */
+.modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+.modal.active { display: flex; }
+.modal-content { background: var(--card); border-radius: 10px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; color: var(--text); }
+.modal-content.large { max-width: 900px; }
+.modal-header { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.modal-title { font-size: 16px; font-weight: 600; color: var(--primary-dark); }
+.modal-body { padding: 20px; }
+.modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+.close-btn { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-light); line-height: 1; }
+.form-group { margin-bottom: 12px; }
+.form-group label { display: block; margin-bottom: 4px; font-weight: 500; font-size: 12px; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: 5px; font-size: 13px; font-family: inherit; background: var(--card); color: var(--text); }
+.form-group textarea { min-height: 70px; resize: vertical; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-hint { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+
+/* Page content */
+.page-content { padding: 20px 25px; overflow-y: auto; flex: 1; }
+.card { background: var(--card); border-radius: 8px; border: 1px solid var(--border); overflow: hidden; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 10px 12px; background: var(--bg); font-weight: 600; color: var(--text-light); font-size: 11px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg); }
+.actions-cell { display: flex; gap: 4px; }
+.avatar-small { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #34d399); color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; margin-right: 6px; vertical-align: middle; }
+.empty-state { text-align: center; padding: 50px 20px; color: var(--text-muted); }
+.empty-state-icon { font-size: 45px; margin-bottom: 12px; opacity: 0.3; }
+
+/* Settings */
+.settings-layout { display: grid; grid-template-columns: 220px 1fr; gap: 20px; flex: 1; overflow: hidden; }
+.settings-nav { background: var(--card); border-right: 1px solid var(--border); padding: 15px; overflow-y: auto; }
+.settings-nav-item { padding: 8px 12px; cursor: pointer; border-radius: 5px; font-size: 13px; margin-bottom: 3px; }
+.settings-nav-item:hover { background: var(--bg); }
+.settings-nav-item.active { background: var(--primary-light); color: var(--primary-dark); font-weight: 500; }
+.settings-content { padding: 20px; overflow-y: auto; }
+.settings-section { margin-bottom: 25px; }
+.settings-section h3 { font-size: 15px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); color: var(--primary-dark); }
+
+/* Dashboard */
+.reports-content { padding: 25px; overflow-y: auto; flex: 1; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.stat-card { background: var(--card); padding: 15px; border-radius: 8px; border: 1px solid var(--border); position: relative; overflow: hidden; }
+.stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--primary), #34d399); }
+.stat-label { font-size: 11px; color: var(--text-light); text-transform: uppercase; margin-bottom: 6px; font-weight: 500; }
+.stat-value { font-size: 24px; font-weight: 700; color: var(--primary-dark); }
+.report-card { background: var(--card); padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 15px; }
+.report-card h3 { font-size: 14px; margin-bottom: 12px; color: var(--primary-dark); }
+.bar-chart { display: flex; flex-direction: column; gap: 8px; }
+.bar-row { display: flex; align-items: center; gap: 8px; }
+.bar-label { width: 110px; font-size: 12px; color: var(--text-light); }
+.bar-track { flex: 1; height: 22px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; background: linear-gradient(90deg, #10b981, #34d399); display: flex; align-items: center; padding-left: 8px; color: white; font-size: 11px; font-weight: 500; }
+.bar-value { width: 40px; text-align: right; font-weight: 600; font-size: 12px; }
+
+/* Toast */
+.toast { position: fixed; bottom: 20px; right: 20px; background: var(--text); color: white; padding: 10px 18px; border-radius: 6px; font-size: 13px; z-index: 2000; opacity: 0; transform: translateY(20px); transition: all 0.3s; }
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.success { background: var(--success); }
+.toast.error { background: var(--danger); }
+
+/* Pin display */
+.pin-display { font-family: 'Courier New', monospace; font-weight: 700; letter-spacing: 3px; background: var(--bg); padding: 3px 10px; border-radius: 5px; font-size: 13px; color: var(--primary-dark); border: 1px dashed var(--border); }
+.role-badge { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+.role-admin { background: #fef3c7; color: #92400e; }
+.role-staff { background: #dbeafe; color: #1e40af; }
+
+@media (max-width: 1100px) {
+    .ticket-detail-body { grid-template-columns: 1fr; }
+    .settings-layout { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN SCREEN ============ -->
+<div class="login-screen" id="loginScreen">
+    <div class="login-container">
+        <div class="login-logo">🎪</div>
+        <div class="login-title">Ярмарка CRM</div>
+        <div class="login-subtitle">Система управления заявками</div>
+
+        <div class="login-tabs">
+            <div class="login-tab active" onclick="switchLoginTab('login')">🔑 Вход</div>
+            <div class="login-tab" onclick="switchLoginTab('register')">📝 Регистрация</div>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <div class="login-form active" id="loginForm">
+            <div class="login-error" id="loginError"></div>
+            <div class="login-field">
+                <label>Выберите сотрудника</label>
+                <div class="user-picker" id="userPicker"></div>
+            </div>
+            <div class="login-field">
+                <label>Пин-код (4 цифры)</label>
+                <input type="password" id="loginPin" class="pin-input" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="••••" autocomplete="off">
+            </div>
+            <button class="login-btn" onclick="doLogin()">Войти в систему</button>
+            <div class="login-hint">
+                💡 Администратор по умолчанию:<br>
+                <strong>Пин: 1408</strong>
+            </div>
+        </div>
+
+        <!-- REGISTER FORM -->
+        <div class="login-form" id="registerForm">
+            <div class="login-error" id="registerError"></div>
+            <div class="login-field">
+                <label>ФИО *</label>
+                <input type="text" id="regFullName" placeholder="Иванов Иван Иванович">
+            </div>
+            <div class="login-field">
+                <label>Номер телефона *</label>
+                <input type="tel" id="regPhone" placeholder="+7 900 123-45-67">
+            </div>
+            <div class="login-field">
+                <label>Отдел *</label>
+                <select id="regDepartment"></select>
+            </div>
+            <div class="login-field">
+                <label>Пин-код для входа (4 цифры) *</label>
+                <input type="password" id="regPin" class="pin-input" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="••••" autocomplete="new-password">
+                <div class="form-hint">Запомните пин-код — он используется для входа в систему</div>
+            </div>
+            <div class="login-field">
+                <label>Подтвердите пин-код *</label>
+                <input type="password" id="regPinConfirm" class="pin-input" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="••••" autocomplete="new-password">
+            </div>
+            <button class="login-btn" onclick="doRegister()">Зарегистрироваться</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============ MAIN APP ============ -->
+<aside class="sidebar" id="appSidebar" style="display:none">
+    <div class="sidebar-header">
+        <span class="logo-icon">🎪</span>
+        <h1>Ярмарка<span class="version">CRM</span></h1>
+    </div>
+    <div class="nav-section">
+        <div class="nav-section-title">Рабочее пространство</div>
+        <div class="nav-item active" data-page="tickets"><span class="nav-icon">📥</span><span>Заявки</span><span class="badge" id="navBadgeTickets">0</span></div>
+        <div class="nav-item" data-page="dashboard"><span class="nav-icon">📊</span><span>Дашборд</span></div>
+    </div>
+    <div class="nav-section" id="navManagement">
+        <div class="nav-section-title">Управление</div>
+        <div class="nav-item" data-page="clients"><span class="nav-icon">👥</span><span>Заявители</span></div>
+        <div class="nav-item" data-page="companies"><span class="nav-icon">🏢</span><span>Компании</span></div>
+        <div class="nav-item" data-page="staff"><span class="nav-icon">🧑‍💼</span><span>Сотрудники</span></div>
+    </div>
+    <div class="nav-section" id="navAnalytics">
+        <div class="nav-section-title">Аналитика</div>
+        <div class="nav-item" data-page="reports"><span class="nav-icon">📈</span><span>Отчёты</span></div>
+    </div>
+    <div class="nav-section" id="navSystem">
+        <div class="nav-section-title">Система</div>
+        <div class="nav-item admin-only" data-page="departments"><span class="nav-icon">🏛</span><span>Отделы</span></div>
+        <div class="nav-item admin-only" data-page="users"><span class="nav-icon">🔐</span><span>Пользователи</span></div>
+        <div class="nav-item" data-page="settings"><span class="nav-icon">⚙️</span><span>Настройки</span></div>
+    </div>
+    <div class="sidebar-footer">
+        <div class="user-avatar" id="currentUserAvatar">АД</div>
+        <div class="user-info">
+            <div class="user-name" id="currentUserName">—</div>
+            <div class="user-role" id="currentUserRole">—</div>
+        </div>
+        <button class="logout-btn" onclick="doLogout()" title="Выйти">🚪</button>
+    </div>
+</aside>
+
+<main class="main-content" id="appMain" style="display:none">
+    <!-- TICKETS -->
+    <div class="page active" id="page-tickets">
+        <div class="topbar">
+            <div class="topbar-title">📥 Заявки</div>
+            <div class="topbar-actions">
+                <div class="search-global"><input type="text" id="globalSearch" placeholder="Поиск..." oninput="renderTickets()"></div>
+                <button class="btn btn-primary" onclick="openTicketModal()">+ Новая заявка</button>
+            </div>
+        </div>
+        <div class="tickets-layout">
+            <div class="tickets-list-panel">
+                <div class="tickets-filters">
+                    <div class="filter-tabs" id="filterTabs">
+                        <div class="filter-tab active" data-filter="all">Все <span class="count" id="countAll">0</span></div>
+                        <div class="filter-tab" data-filter="mine">Мои <span class="count" id="countMine">0</span></div>
+                        <div class="filter-tab" data-filter="unassigned">Неназначенные <span class="count" id="countUnassigned">0</span></div>
+                        <div class="filter-tab" data-filter="new">Новые <span class="count" id="countNew">0</span></div>
+                        <div class="filter-tab" data-filter="open">В работе <span class="count" id="countOpen">0</span></div>
+                        <div class="filter-tab" data-filter="pending">Ожидание <span class="count" id="countPending">0</span></div>
+                        <div class="filter-tab" data-filter="solved">Решённые <span class="count" id="countSolved">0</span></div>
+                    </div>
+                    <div class="filter-row">
+                        <select id="filterPriority" onchange="renderTickets()"><option value="">Приоритет</option><option value="low">Низкий</option><option value="medium">Средний</option><option value="high">Высокий</option><option value="urgent">Срочный</option></select>
+                        <select id="filterCategory" onchange="renderTickets()"><option value="">Категория</option></select>
+                        <select id="filterAssignee" onchange="renderTickets()"><option value="">Исполнитель</option></select>
+                    </div>
+                </div>
+                <div class="tickets-list" id="ticketsList"></div>
+            </div>
+            <div class="tickets-detail-panel" id="ticketDetail">
+                <div class="ticket-detail-empty">
+                    <div class="empty-icon">📥</div>
+                    <h3>Выберите заявку</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="page" id="page-dashboard"><div class="topbar"><div class="topbar-title">📊 Дашборд</div></div><div class="reports-content" id="dashboardContent"></div></div>
+
+    <div class="page" id="page-clients">
+        <div class="topbar"><div class="topbar-title">👥 Заявители</div><div class="topbar-actions"><button class="btn btn-primary" onclick="openClientModal()">+ Заявитель</button></div></div>
+        <div class="page-content"><div class="card"><table><thead><tr><th>Заявитель</th><th>Email</th><th>Телефон</th><th>Компания</th><th>Заявок</th><th>Действия</th></tr></thead><tbody id="clientsTable"></tbody></table></div></div>
+    </div>
+
+    <div class="page" id="page-companies">
+        <div class="topbar"><div class="topbar-title">🏢 Компании</div><div class="topbar-actions"><button class="btn btn-primary" onclick="openCompanyModal()">+ Компания</button></div></div>
+        <div class="page-content"><div class="card"><table><thead><tr><th>Компания</th><th>Домен</th><th>Заявителей</th><th>Заявок</th><th>Действия</th></tr></thead><tbody id="companiesTable"></tbody></table></div></div>
+    </div>
+
+    <div class="page" id="page-staff">
+        <div class="topbar"><div class="topbar-title">🧑‍💼 Мои коллеги</div></div>
+        <div class="page-content"><div class="card"><table><thead><tr><th>Сотрудник</th><th>Телефон</th><th>Отдел</th><th>Роль</th><th>Открытых заявок</th><th>Решено</th></tr></thead><tbody id="staffTable"></tbody></table></div></div>
+    </div>
+
+    <div class="page" id="page-reports"><div class="topbar"><div class="topbar-title">📈 Отчёты</div></div><div class="reports-content" id="reportsContent"></div></div>
+
+    <!-- ADMIN: DEPARTMENTS -->
+    <div class="page" id="page-departments">
+        <div class="topbar"><div class="topbar-title">🏛 Отделы</div><div class="topbar-actions"><button class="btn btn-primary" onclick="openDepartmentModal()">+ Отдел</button></div></div>
+        <div class="page-content">
+            <div style="margin-bottom:15px;padding:12px;background:var(--primary-light);border-radius:8px;font-size:12px;color:var(--primary-dark);border-left:3px solid var(--primary)">
+                🏛 Управление отделами. К каждому отделу можно привязать сотрудников.
+            </div>
+            <div id="departmentsList"></div>
+        </div>
+    </div>
+
+    <!-- ADMIN: USERS -->
+    <div class="page" id="page-users">
+        <div class="topbar"><div class="topbar-title">🔐 Пользователи системы</div></div>
+        <div class="page-content">
+            <div style="margin-bottom:15px;padding:12px;background:#fef3c7;border-radius:8px;font-size:12px;color:#92400e;border-left:3px solid #f59e0b">
+                🔐 <strong>Режим администратора.</strong> Здесь отображаются все зарегистрированные пользователи, их пин-коды и права доступа.
+            </div>
+            <div class="card"><table><thead><tr><th>ФИО</th><th>Телефон</th><th>Отдел</th><th>Роль</th><th>Пин-код</th><th>Создан</th><th>Действия</th></tr></thead><tbody id="usersTable"></tbody></table></div>
+        </div>
+    </div>
+
+    <div class="page" id="page-settings">
+        <div class="topbar"><div class="topbar-title">⚙️ Настройки</div></div>
+        <div class="settings-layout">
+            <div class="settings-nav">
+                <div class="settings-nav-item active" data-settings="profile">Мой профиль</div>
+                <div class="settings-nav-item admin-only" data-settings="general">Общие</div>
+                <div class="settings-nav-item admin-only" data-settings="categories">Категории</div>
+                <div class="settings-nav-item admin-only" data-settings="data">Данные</div>
+            </div>
+            <div class="settings-content" id="settingsContent"></div>
+        </div>
+    </div>
+</main>
+
+<!-- ============ MODALS ============ -->
+
+<!-- TICKET MODAL -->
+<div class="modal" id="ticketModal">
+    <div class="modal-content large">
+        <div class="modal-header"><div class="modal-title" id="ticketModalTitle">Новая заявка</div><button class="close-btn" onclick="closeModal('ticketModal')">&times;</button></div>
+        <div class="modal-body">
+            <form id="ticketForm" onsubmit="saveTicket(event)">
+                <input type="hidden" id="ticketId">
+                <div class="form-group"><label>Тема *</label><input type="text" id="ticketSubject" required></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Заявитель *</label><select id="ticketClient" required></select></div>
+                    <div class="form-group"><label>Категория</label><select id="ticketCategory"></select></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Приоритет</label><select id="ticketPriority"><option value="low">Низкий</option><option value="medium" selected>Средний</option><option value="high">Высокий</option><option value="urgent">Срочный</option></select></div>
+                    <div class="form-group"><label>Исполнитель</label><select id="ticketAssignee"></select></div>
+                </div>
+                <div class="form-group"><label>Описание *</label><textarea id="ticketDescription" required></textarea></div>
+            </form>
+        </div>
+        <div class="modal-footer"><button class="btn" onclick="closeModal('ticketModal')">Отмена</button><button class="btn btn-primary" onclick="document.getElementById('ticketForm').requestSubmit()">Сохранить</button></div>
+    </div>
+</div>
+
+<!-- POSTPONE MODAL -->
+<div class="modal" id="postponeModal">
+    <div class="modal-content" style="max-width:480px">
+        <div class="modal-header"><div class="modal-title">⏸ Отложить заявку</div><button class="close-btn" onclick="closeModal('postponeModal')">&times;</button></div>
+        <div class="modal-body">
+            <div style="text-align:center;padding:10px 0">
+                <div style="font-size:48px;margin-bottom:15px">⏸️</div>
+                <div style="font-size:14px;font-weight:500;margin-bottom:15px">Когда вернуться к заявке?</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:15px">
+                    <button class="btn btn-small" onclick="setPostponePreset(1)">1 час</button>
+                    <button class="btn btn-small" onclick="setPostponePreset(4)">4 часа</button>
+                    <button class="btn btn-small" onclick="setPostponePreset(24)">Завтра</button>
+                    <button class="btn btn-small" onclick="setPostponePreset(168)">Неделя</button>
+                </div>
+                <input type="datetime-local" id="postponeDate" style="width:100%;padding:9px;border:1px solid var(--border);border-radius:6px;font-family:inherit;background:var(--card);color:var(--text)">
+                <div style="margin-top:12px"><textarea id="postponeReason" placeholder="Причина (необязательно)" style="width:100%;padding:9px;border:1px solid var(--border);border-radius:6px;font-family:inherit;min-height:60px;background:var(--card);color:var(--text)"></textarea></div>
+            </div>
+        </div>
+        <div class="modal-footer"><button class="btn" onclick="closeModal('postponeModal')">Отмена</button><button class="btn btn-warning" onclick="confirmPostpone()" style="color:white">⏸ Отложить</button></div>
+    </div>
+</div>
+
+<!-- CLIENT MODAL -->
+<div class="modal" id="clientModal">
+    <div class="modal-content">
+        <div class="modal-header"><div class="modal-title" id="clientModalTitle">Новый заявитель</div><button class="close-btn" onclick="closeModal('clientModal')">&times;</button></div>
+        <div class="modal-body">
+            <form id="clientForm" onsubmit="saveClient(event)">
+                <input type="hidden" id="clientId">
+                <div class="form-group"><label>Имя *</label><input type="text" id="clientName" required></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Email *</label><input type="email" id="clientEmail" required></div>
+                    <div class="form-group"><label>Телефон</label><input type="tel" id="clientPhone"></div>
+                </div>
+                <div class="form-group"><label>Компания</label><select id="clientCompany"></select></div>
+            </form>
+        </div>
+        <div class="modal-footer"><button class="btn" onclick="closeModal('clientModal')">Отмена</button><button class="btn btn-primary" onclick="document.getElementById('clientForm').requestSubmit()">Сохранить</button></div>
+    </div>
+</div>
+
+<!-- COMPANY MODAL -->
+<div class="modal" id="companyModal">
+    <div class="modal-content">
+        <div class="modal-header"><div class="modal-title" id="companyModalTitle">Новая компания</div><button class="close-btn" onclick="closeModal('companyModal')">&times;</button></div>
+        <div class="modal-body">
+            <form id="companyForm" onsubmit="saveCompany(event)">
+                <input type="hidden" id="companyId">
+                <div class="form-group"><label>Название *</label><input type="text" id="companyName" required></div>
+                <div class="form-group"><label>Домен</label><input type="text" id="companyDomain"></div>
+            </form>
+        </div>
+        <div class="modal-footer"><button class="btn" onclick="closeModal('companyModal')">Отмена</button><button class="btn btn-primary" onclick="document.getElementById('companyForm').requestSubmit()">Сохранить</button></div>
+    </div>
+</div>
+
+<!-- DEPARTMENT MODAL -->
+<div class="modal" id="departmentModal">
+    <div class="modal-content">
+        <div class="modal-header"><div class="modal-title" id="departmentModalTitle">Новый отдел</div><button class="close-btn" onclick="closeModal('departmentModal')">&times;</button></div>
+        <div class="modal-body">
+            <form id="departmentForm" onsubmit="saveDepartment(event)">
+                <input type="hidden" id="departmentId">
+                <div class="form-group"><label>Название отдела *</label><input type="text" id="departmentName" required placeholder="Техническая поддержка"></div>
+                <div class="form-group"><label>Описание</label><textarea id="departmentDescription"></textarea></div>
+                <div class="form-group"><label>Цвет</label><input type="color" id="departmentColor" value="#10b981" style="height:40px;cursor:pointer"></div>
+            </form>
+        </div>
+        <div class="modal-footer"><button class="btn" onclick="closeModal('departmentModal')">Отмена</button><button class="btn btn-primary" onclick="document.getElementById('departmentForm').requestSubmit()">Сохранить</button></div>
+    </div>
+</div>
+
+<!-- USER MODAL (admin edit) -->
+<div class="modal" id="userModal">
+    <div class="modal-content">
+        <div class="modal-header"><div class="modal-title" id="userModalTitle">Редактировать пользователя</div><button class="close-btn" onclick="closeModal('userModal')">&times;</button></div>
+        <div class="modal-body">
+            <form id="userForm" onsubmit="saveUser(event)">
+                <input type="hidden" id="userId">
+                <div class="form-group"><label>ФИО *</label><input type="text" id="userFullName" required></div>
+                <div class="form-group"><label>Телефон *</label><input type="tel" id="userPhone" required></div>
+                <div class="form-group"><label>Отдел</label><select id="userDepartment"></select></div>
+                <div class="form-group"><label>Роль</label>
+                    <select id="userRole">
+                        <option value="staff">Сотрудник</option>
+                        <option value="admin">Администратор</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Новый пин-код (4 цифры, оставьте пустым чтобы не менять)</label>
+                    <input type="password" id="userPin" class="pin-input" maxlength="4" inputmode="numeric" placeholder="••••" autocomplete="new-password">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer"><button class="btn" onclick="closeModal('userModal')">Отмена</button><button class="btn btn-primary" onclick="document.getElementById('userForm').requestSubmit()">Сохранить</button></div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============ STATE ============
+let state = {
+    users: JSON.parse(localStorage.getItem('hd_users')) || [],
+    departments: JSON.parse(localStorage.getItem('hd_departments')) || [],
+    clients: JSON.parse(localStorage.getItem('hd_clients')) || [],
+    companies: JSON.parse(localStorage.getItem('hd_companies')) || [],
+    tickets: JSON.parse(localStorage.getItem('hd_tickets')) || [],
+    categories: JSON.parse(localStorage.getItem('hd_categories')) || [],
+    settings: JSON.parse(localStorage.getItem('hd_settings')) || { theme: 'light', companyName: 'Ярмарка CRM' },
+    session: JSON.parse(localStorage.getItem('hd_session')) || null
+};
+
+let CURRENT_USER_ID = null;
+let selectedTicketId = null;
+let currentFilter = 'all';
+let postponeTicketId = null;
+let selectedLoginUserId = null;
+
+const STATUS_LABELS = { new: 'Новая', open: 'В работе', pending: 'Ожидание', solved: 'Решена', closed: 'Закрыта' };
+const PRIORITY_LABELS = { low: 'Низкий', medium: 'Средний', high: 'Высокий', urgent: 'Срочный' };
+const ROLE_LABELS = { admin: 'Администратор', staff: 'Сотрудник' };
+
+// ============ SEED ============
+function seedData() {
+    // Departments
+    if (state.departments.length === 0) {
+        state.departments = [
+            { id: 'dep1', name: 'Техническая поддержка', description: 'Решение технических вопросов', color: '#10b981', createdAt: new Date().toISOString() },
+            { id: 'dep2', name: 'Отдел продаж', description: 'Работа с клиентами и продажами', color: '#3b82f6', createdAt: new Date().toISOString() },
+            { id: 'dep3', name: 'Бухгалтерия', description: 'Финансовые вопросы', color: '#f59e0b', createdAt: new Date().toISOString() },
+            { id: 'dep4', name: 'Отдел кадров', description: 'Работа с персоналом', color: '#8b5cf6', createdAt: new Date().toISOString() }
+        ];
+    }
+    // Users (admin + staff)
+    if (state.users.length === 0) {
+        state.users = [
+            { id: 'user-admin', fullName: 'Администратор Системы', phone: '+7 900 000-00-00', pin: '1408', role: 'admin', departmentId: 'dep1', createdAt: new Date().toISOString() },
+            { id: 'user-2', fullName: 'Петров Сергей Александрович', phone: '+7 900 111-11-11', pin: '1111', role: 'staff', departmentId: 'dep1', createdAt: new Date().toISOString() },
+            { id: 'user-3', fullName: 'Сидорова Анна Игоревна', phone: '+7 900 222-22-22', pin: '2222', role: 'staff', departmentId: 'dep2', createdAt: new Date().toISOString() }
+        ];
+    }
+    // Companies
+    if (state.companies.length === 0) {
+        state.companies = [
+            { id: 'co1', name: 'Компания 1', domain: 'company1.ru', createdAt: new Date().toISOString() },
+            { id: 'co2', name: 'Компания 2', domain: 'company2.ru', createdAt: new Date().toISOString() },
+            { id: 'co3', name: 'Компания 3', domain: 'company3.ru', createdAt: new Date().toISOString() }
+        ];
+    }
+    // Clients
+    if (state.clients.length === 0) {
+        state.clients = [
+            { id: 'c1', name: 'Заявитель 1', email: 'a1@yarmarka.ru', phone: '+7 900 111-11-11', companyId: 'co1', createdAt: new Date().toISOString() },
+            { id: 'c2', name: 'Заявитель 2', email: 'a2@yarmarka.ru', phone: '+7 900 222-22-22', companyId: 'co2', createdAt: new Date().toISOString() },
+            { id: 'c3', name: 'Заявитель 3', email: 'a3@yarmarka.ru', phone: '+7 900 333-33-33', companyId: 'co3', createdAt: new Date().toISOString() }
+        ];
+    }
+    // Categories
+    if (state.categories.length === 0) {
+        state.categories = [
+            { id: 'cat1', name: 'Тех. поддержка', color: '#10b981' },
+            { id: 'cat2', name: 'Продажи', color: '#059669' },
+            { id: 'cat3', name: 'Оплата', color: '#f59e0b' },
+            { id: 'cat4', name: 'Возврат', color: '#ef4444' },
+            { id: 'cat5', name: 'Другое', color: '#6b7280' }
+        ];
+    }
+    // Tickets
+    if (state.tickets.length === 0) {
+        const now = Date.now();
+        state.tickets = [
+            { id: 't1', number: 'HD-1001', subject: 'Не работает оплата картой', description: 'Ошибка при оплате заказа.', clientId: 'c1', category: 'cat3', priority: 'high', status: 'open', assigneeId: 'user-admin', createdAt: new Date(now - 3600000*2).toISOString(), updatedAt: new Date(now - 3600000).toISOString(), resolvedAt: null, comments: [{ id: 'cm1', authorId: 'c1', authorType: 'client', text: 'Не могу оплатить заказ.', createdAt: new Date(now - 3600000*2).toISOString() }, { id: 'cm2', authorId: 'user-admin', authorType: 'agent', text: 'Проверю информацию.', createdAt: new Date(now - 3600000).toISOString() }], history: [] },
+            { id: 't2', number: 'HD-1002', subject: 'Вопрос по тарифу', description: 'Хотел бы узнать о тарифах.', clientId: 'c2', category: 'cat2', priority: 'medium', status: 'new', assigneeId: 'user-3', createdAt: new Date(now - 3600000).toISOString(), updatedAt: new Date(now - 3600000).toISOString(), resolvedAt: null, comments: [{ id: 'cm4', authorId: 'c2', authorType: 'client', text: 'Расскажите про тарифы.', createdAt: new Date(now - 3600000).toISOString() }], history: [] },
+            { id: 't3', number: 'HD-1003', subject: 'Возврат средств', description: 'Товар не соответствует.', clientId: 'c3', category: 'cat4', priority: 'urgent', status: 'pending', assigneeId: 'user-2', createdAt: new Date(now - 86400000).toISOString(), updatedAt: new Date(now - 3600000*5).toISOString(), dueAt: new Date(now + 86400000).toISOString(), resolvedAt: null, postponeReason: 'Ждём фото', comments: [{ id: 'cm5', authorId: 'c3', authorType: 'client', text: 'Товар повреждённый.', createdAt: new Date(now - 86400000).toISOString() }], history: [] },
+            { id: 't4', number: 'HD-1004', subject: 'Ошибка при входе', description: 'Не могу войти в ЛК.', clientId: 'c1', category: 'cat1', priority: 'medium', status: 'solved', assigneeId: 'user-2', createdAt: new Date(now - 86400000*2).toISOString(), updatedAt: new Date(now - 86400000).toISOString(), resolvedAt: new Date(now - 86400000).toISOString(), comments: [{ id: 'cm8', authorId: 'user-2', authorType: 'agent', text: 'Сбросил пароль.', createdAt: new Date(now - 86400000).toISOString() }], history: [] }
+        ];
+    }
+    save();
+}
+
+function save() {
+    localStorage.setItem('hd_users', JSON.stringify(state.users));
+    localStorage.setItem('hd_departments', JSON.stringify(state.departments));
+    localStorage.setItem('hd_clients', JSON.stringify(state.clients));
+    localStorage.setItem('hd_companies', JSON.stringify(state.companies));
+    localStorage.setItem('hd_tickets', JSON.stringify(state.tickets));
+    localStorage.setItem('hd_categories', JSON.stringify(state.categories));
+    localStorage.setItem('hd_settings', JSON.stringify(state.settings));
+    if (state.session) localStorage.setItem('hd_session', JSON.stringify(state.session));
+    else localStorage.removeItem('hd_session');
+}
+
+// ============ HELPERS ============
+function getUser(id) { return state.users.find(u => u.id === id); }
+function getClient(id) { return state.clients.find(c => c.id === id); }
+function getCompany(id) { return state.companies.find(c => c.id === id); }
+function getCategory(id) { return state.categories.find(c => c.id === id); }
+function getDepartment(id) { return state.departments.find(d => d.id === id); }
+function getCurrentUser() { return getUser(CURRENT_USER_ID); }
+function isAdmin() { const u = getCurrentUser(); return u && u.role === 'admin'; }
+
+function getInitials(name) {
+    if (!name) return '?';
+    const parts = name.split(' ').filter(Boolean);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return parts[0].slice(0, 2).toUpperCase();
+}
+
+function formatDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso); const diff = (Date.now() - d) / 1000;
+    if (diff < 60) return 'только что';
+    if (diff < 3600) return Math.floor(diff/60) + ' мин';
+    if (diff < 86400) return Math.floor(diff/3600) + ' ч';
+    if (diff < 86400*7) return Math.floor(diff/86400) + ' дн';
+    return d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' });
+}
+function formatDateTime(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function toast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show ' + type;
+    setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+document.querySelectorAll('.modal').forEach(m => {
+    m.addEventListener('click', e => { if (e.target === m) m.classList.remove('active'); });
+});
+
+// ============ AUTH ============
+function checkAuth() {
+    if (state.session && state.session.userId && getUser(state.session.userId)) {
+        CURRENT_USER_ID = state.session.userId;
+        showApp();
+    } else {
+        showLogin();
+    }
+}
+
+function showLogin() {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('appSidebar').style.display = 'none';
+    document.getElementById('appMain').style.display = 'none';
+    renderUserPicker();
+    renderRegDepartments();
+}
+
+function showApp() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appSidebar').style.display = '';
+    document.getElementById('appMain').style.display = '';
+    applyPermissions();
+    renderCurrentUser();
+    renderTickets();
+    renderTicketDetail();
+}
+
+function applyPermissions() {
+    const admin = isAdmin();
+    // Скрываем админские разделы для обычных сотрудников
+    document.querySelectorAll('.admin-only').forEach(el => {
+        el.style.display = admin ? '' : 'none';
+    });
+}
+
+function renderCurrentUser() {
+    const u = getCurrentUser();
+    if (!u) return;
+    const dep = getDepartment(u.departmentId);
+    document.getElementById('currentUserName').textContent = u.fullName;
+    document.getElementById('currentUserRole').textContent = (dep ? dep.name + ' • ' : '') + ROLE_LABELS[u.role];
+    document.getElementById('currentUserAvatar').textContent = getInitials(u.fullName);
+}
+
+function switchLoginTab(tab) {
+    document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.login-form').forEach(f => f.classList.remove('active'));
+    if (tab === 'login') {
+        document.querySelectorAll('.login-tab')[0].classList.add('active');
+        document.getElementById('loginForm').classList.add('active');
+    } else {
+        document.querySelectorAll('.login-tab')[1].classList.add('active');
+        document.getElementById('registerForm').classList.add('active');
+        renderRegDepartments();
+    }
+    hideLoginError('loginError');
+    hideLoginError('registerError');
+}
+
+function showLoginError(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.classList.add('show');
+}
+function hideLoginError(id) {
+    document.getElementById(id).classList.remove('show');
+}
+
+function renderUserPicker() {
+    const picker = document.getElementById('userPicker');
+    if (state.users.length === 0) {
+        picker.innerHTML = '<div style="padding:15px;text-align:center;color:var(--text-muted);font-size:12px">Нет зарегистрированных сотрудников. Зарегистрируйтесь первым!</div>';
+        return;
+    }
+    picker.innerHTML = state.users.map(u => {
+        const dep = getDepartment(u.departmentId);
+        return `
+            <div class="user-pick-item ${selectedLoginUserId === u.id ? 'selected' : ''}" onclick="selectLoginUser('${u.id}')">
+                <div class="user-pick-avatar">${getInitials(u.fullName)}</div>
+                <div class="user-pick-info">
+                    <div class="user-pick-name">${u.fullName}</div>
+                    <div class="user-pick-role">${dep ? dep.name : 'Без отдела'} • ${ROLE_LABELS[u.role]}</div>
+                </div>
+                ${u.role === 'admin' ? '<span class="user-pick-badge">ADMIN</span>' : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+function selectLoginUser(id) {
+    selectedLoginUserId = id;
+    renderUserPicker();
+    document.getElementById('loginPin').focus();
+}
+
+function doLogin() {
+    hideLoginError('loginError');
+    if (!selectedLoginUserId) { showLoginError('loginError', 'Выберите сотрудника'); return; }
+    const pin = document.getElementById('loginPin').value;
+    if (!/^\d{4}$/.test(pin)) { showLoginError('loginError', 'Пин-код должен содержать 4 цифры'); return; }
+    const user = getUser(selectedLoginUserId);
+    if (!user) { showLoginError('loginError', 'Пользователь не найден'); return; }
+    if (user.pin !== pin) { showLoginError('loginError', 'Неверный пин-код'); return; }
+
+    CURRENT_USER_ID = user.id;
+    state.session = { userId: user.id, loginAt: new Date().toISOString() };
+    save();
+    toast('👋 Добро пожаловать, ' + user.fullName.split(' ')[0] + '!');
+    showApp();
+}
+
+function doRegister() {
+    hideLoginError('registerError');
+    const fullName = document.getElementById('regFullName').value.trim();
+    const phone = document.getElementById('regPhone').value.trim();
+    const departmentId = document.getElementById('regDepartment').value;
+    const pin = document.getElementById('regPin').value;
+    const pinConfirm = document.getElementById('regPinConfirm').value;
+
+    if (!fullName || fullName.split(' ').length < 2) { showLoginError('registerError', 'Введите ФИО полностью (минимум 2 слова)'); return; }
+    if (!phone || phone.length < 5) { showLoginError('registerError', 'Введите корректный номер телефона'); return; }
+    if (!departmentId) { showLoginError('registerError', 'Выберите отдел'); return; }
+    if (!/^\d{4}$/.test(pin)) { showLoginError('registerError', 'Пин-код должен содержать 4 цифры'); return; }
+    if (pin !== pinConfirm) { showLoginError('registerError', 'Пин-коды не совпадают'); return; }
+
+    // Проверка уникальности телефона
+    if (state.users.some(u => u.phone === phone)) { showLoginError('registerError', 'Сотрудник с таким телефоном уже зарегистрирован'); return; }
+
+    const newUser = {
+        id: 'user-' + Date.now(),
+        fullName, phone, pin,
+        role: 'staff', // Новые пользователи — всегда сотрудники
+        departmentId,
+        createdAt: new Date().toISOString()
+    };
+    state.users.push(newUser);
+    save();
+
+    // Автоматический вход
+    CURRENT_USER_ID = newUser.id;
+    state.session = { userId: newUser.id, loginAt: new Date().toISOString() };
+    save();
+
+    toast('✅ Регистрация успешна! Добро пожаловать!');
+    showApp();
+}
+
+function doLogout() {
+    if (!confirm('Выйти из системы?')) return;
+    state.session = null;
+    CURRENT_USER_ID = null;
+    selectedLoginUserId = null;
+    selectedTicketId = null;
+    save();
+    document.getElementById('loginPin').value = '';
+    showLogin();
+}
+
+function renderRegDepartments() {
+    const sel = document.getElementById('regDepartment');
+    sel.innerHTML = '<option value="">— Выберите отдел —</option>' + state.departments.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+}
+
+// Разрешаем ввод только цифр в пин-поля
+document.addEventListener('input', e => {
+    if (e.target.classList && e.target.classList.contains('pin-input')) {
+        e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
+    }
+});
+
+// Enter для входа
+document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('loginScreen').style.display !== 'none') {
+        if (document.getElementById('loginForm').classList.contains('active')) doLogin();
+        else if (document.getElementById('registerForm').classList.contains('active')) doRegister();
+    }
+});
+
+// ============ NAVIGATION ============
+document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        const page = item.dataset.page;
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById('page-' + page).classList.add('active');
+        if (page === 'dashboard') renderDashboard();
+        if (page === 'clients') renderClients();
+        if (page === 'companies') renderCompanies();
+        if (page === 'staff') renderStaff();
+        if (page === 'reports') renderReports();
+        if (page === 'tickets') renderTickets();
+        if (page === 'departments') renderDepartments();
+        if (page === 'users') renderUsers();
+        if (page === 'settings') renderSettings();
+    });
+});
+
+// ============ TICKETS ============
+document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentFilter = tab.dataset.filter;
+        renderTickets();
+    });
+});
+
+function populateFilters() {
+    document.getElementById('filterCategory').innerHTML = '<option value="">Категория</option>' + state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    document.getElementById('filterAssignee').innerHTML = '<option value="">Исполнитель</option><option value="unassigned">Неназначенные</option>' + state.users.map(u => `<option value="${u.id}">${u.fullName}</option>`).join('');
+}
+
+function filterTickets() {
+    const search = document.getElementById('globalSearch').value.toLowerCase();
+    const priority = document.getElementById('filterPriority').value;
+    const category = document.getElementById('filterCategory').value;
+    const assignee = document.getElementById('filterAssignee').value;
+
+    let filtered = state.tickets.filter(t => {
+        const client = getClient(t.clientId);
+        const matchSearch = !search || t.subject.toLowerCase().includes(search) || t.number.toLowerCase().includes(search) || (client && client.name.toLowerCase().includes(search));
+        const matchPriority = !priority || t.priority === priority;
+        const matchCategory = !category || t.category === category;
+        const matchAssignee = !assignee || (assignee === 'unassigned' ? !t.assigneeId : t.assigneeId === assignee);
+
+        let matchFilter = true;
+        if (currentFilter === 'mine') matchFilter = t.assigneeId === CURRENT_USER_ID;
+        else if (currentFilter === 'unassigned') matchFilter = !t.assigneeId;
+        else if (currentFilter === 'new') matchFilter = t.status === 'new';
+        else if (currentFilter === 'open') matchFilter = t.status === 'open';
+        else if (currentFilter === 'pending') matchFilter = t.status === 'pending';
+        else if (currentFilter === 'solved') matchFilter = t.status === 'solved' || t.status === 'closed';
+        return matchSearch && matchPriority && matchCategory && matchAssignee && matchFilter;
+    });
+    filtered.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    return filtered;
+}
+
+function updateCounts() {
+    document.getElementById('countAll').textContent = state.tickets.length;
+    document.getElementById('countMine').textContent = state.tickets.filter(t => t.assigneeId === CURRENT_USER_ID && !['solved','closed'].includes(t.status)).length;
+    document.getElementById('countUnassigned').textContent = state.tickets.filter(t => !t.assigneeId && !['solved','closed'].includes(t.status)).length;
+    document.getElementById('countNew').textContent = state.tickets.filter(t => t.status === 'new').length;
+    document.getElementById('countOpen').textContent = state.tickets.filter(t => t.status === 'open').length;
+    document.getElementById('countPending').textContent = state.tickets.filter(t => t.status === 'pending').length;
+    document.getElementById('countSolved').textContent = state.tickets.filter(t => t.status === 'solved' || t.status === 'closed').length;
+    document.getElementById('navBadgeTickets').textContent = state.tickets.filter(t => t.status === 'new' || t.status === 'open').length;
+}
+
+function renderTickets() {
+    updateCounts();
+    populateFilters();
+    const filtered = filterTickets();
+    const list = document.getElementById('ticketsList');
+    if (filtered.length === 0) { list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>Нет заявок</p></div>'; return; }
+    list.innerHTML = filtered.map(t => {
+        const client = getClient(t.clientId);
+        const cat = getCategory(t.category);
+        const lastComment = t.comments[t.comments.length - 1];
+        const preview = lastComment ? lastComment.text : t.description;
+        return `
+            <div class="ticket-item ${t.id === selectedTicketId ? 'active' : ''}" onclick="selectTicket('${t.id}')">
+                <div class="ticket-priority-bar priority-${t.priority}"></div>
+                <div class="ticket-content">
+                    <div class="ticket-header">
+                        <span class="ticket-number">${t.number}</span>
+                        <span class="ticket-time">${formatDate(t.updatedAt)}</span>
+                    </div>
+                    <div class="ticket-subject">${t.subject}</div>
+                    <div class="ticket-preview">${preview}</div>
+                    <div class="ticket-meta">
+                        <span class="badge-status status-${t.status}">${STATUS_LABELS[t.status]}</span>
+                        ${cat ? `<span style="font-size:10px;color:${cat.color}">● ${cat.name}</span>` : ''}
+                        ${client ? `<span style="font-size:10px;color:var(--text-light)">👤 ${client.name}</span>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function selectTicket(id) {
+    selectedTicketId = id;
+    renderTickets();
+    renderTicketDetail();
+}
+
+function renderTicketDetail() {
+    const panel = document.getElementById('ticketDetail');
+    const t = state.tickets.find(x => x.id === selectedTicketId);
+    if (!t) { panel.innerHTML = `<div class="ticket-detail-empty"><div class="empty-icon">📥</div><h3>Выберите заявку</h3></div>`; return; }
+    const client = getClient(t.clientId);
+    const assignee = getUser(t.assigneeId);
+    const cat = getCategory(t.category);
+    const company = client && client.companyId ? getCompany(client.companyId) : null;
+    const isResolved = t.status === 'solved' || t.status === 'closed';
+    const isPending = t.status === 'pending';
+
+    let bannerHtml = '';
+    if (isResolved) {
+        bannerHtml = `<div style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);color:#065f46;padding:12px 16px;border-radius:8px;margin-bottom:15px;display:flex;align-items:center;gap:12px"><span style="font-size:24px">✅</span><div style="flex:1"><div style="font-weight:600">Заявка решена</div><div style="font-size:11px;opacity:0.8">${t.resolvedAt ? formatDateTime(t.resolvedAt) : ''}</div></div><button class="btn btn-small" style="background:var(--info);color:white;border-color:var(--info)" onclick="reopenTicket('${t.id}')">🔓 Открыть заново</button></div>`;
+    } else if (isPending && t.dueAt) {
+        bannerHtml = `<div style="background:linear-gradient(135deg,#fef3c7,#fde68a);color:#92400e;padding:12px 16px;border-radius:8px;margin-bottom:15px;display:flex;align-items:center;gap:12px"><span style="font-size:24px">⏸️</span><div style="flex:1"><div style="font-weight:600">Отложена</div><div style="font-size:11px">Вернуться: <strong>${formatDateTime(t.dueAt)}</strong>${t.postponeReason ? ' • ' + t.postponeReason : ''}</div></div><button class="btn btn-small btn-resolve" onclick="resolveTicket('${t.id}')">✓ Решить</button><button class="btn btn-small btn-postpone" onclick="openPostponeModal('${t.id}')" style="color:white">⏸ Изменить</button></div>`;
+    }
+
+    const messagesHtml = t.comments.map(c => {
+        let authorName = '', cls = '';
+        if (c.authorType === 'client') { const cl = getClient(c.authorId); authorName = cl ? cl.name : 'Заявитель'; cls = 'message-client'; }
+        else if (c.authorType === 'system') { authorName = '🤖 Система'; cls = 'message-system'; }
+        else { const u = getUser(c.authorId); authorName = u ? u.fullName : 'Исполнитель'; cls = 'message-agent'; }
+        return `<div class="message ${cls}"><div class="message-header"><span class="message-author">${authorName}</span><span class="message-time">${formatDateTime(c.createdAt)}</span></div><div class="message-body">${c.text}</div></div>`;
+    }).join('');
+
+    panel.innerHTML = `
+        <div class="ticket-detail">
+            ${bannerHtml}
+            <div class="ticket-detail-header">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
+                    <span style="font-size:12px;color:var(--text-muted);font-family:monospace">${t.number}</span>
+                    <span class="badge-status status-${t.status}">${STATUS_LABELS[t.status]}</span>
+                    <span class="badge-priority" style="background:${t.priority==='urgent'?'#fee2e2':t.priority==='high'?'#fef3c7':t.priority==='medium'?'#d1fae5':'#f3f4f6'};color:${t.priority==='urgent'?'#991b1b':t.priority==='high'?'#92400e':t.priority==='medium'?'#065f46':'#374151'};padding:1px 7px;border-radius:8px;font-size:10px">${PRIORITY_LABELS[t.priority]}</span>
+                </div>
+                <div class="ticket-detail-title">${t.subject}</div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--text-light);margin-top:10px">
+                    <span>📅 ${formatDateTime(t.createdAt)}</span>
+                    ${assignee ? `<span>🧑‍💼 ${assignee.fullName}</span>` : '<span style="color:var(--warning)">⚠ Не назначен</span>'}
+                </div>
+                ${!isResolved ? `<div class="ticket-action-bar"><button class="btn-resolve" onclick="resolveTicket('${t.id}')">✅ Отметить как решённую</button><button class="btn-postpone" onclick="openPostponeModal('${t.id}')" style="color:white">⏸ Отложить</button></div>` : ''}
+            </div>
+            <div class="ticket-detail-body">
+                <div class="conversation">
+                    <div class="conversation-title">💬 Переписка (${t.comments.length})</div>
+                    <div class="message message-client">
+                        <div class="message-header"><span class="message-author">📩 От ${client ? client.name : 'заявителя'}</span><span class="message-time">${formatDateTime(t.createdAt)}</span></div>
+                        <div class="message-body">${t.description}</div>
+                    </div>
+                    ${messagesHtml}
+                    <div class="reply-box">
+                        <textarea id="replyText" placeholder="Ответ заявителю..."></textarea>
+                        <div class="reply-actions"><button class="btn btn-primary" onclick="sendReply()">Отправить</button></div>
+                    </div>
+                </div>
+                <div class="ticket-sidebar">
+                    <div class="info-card">
+                        <div class="info-card-title">Заявитель</div>
+                        ${client ? `<div class="client-card"><div class="client-avatar">${getInitials(client.name)}</div><div class="client-info"><div class="client-name">${client.name}</div><div class="client-email">${client.email}</div>${client.phone ? `<div class="client-email">${client.phone}</div>` : ''}</div></div>${company ? `<div style="font-size:11px;color:var(--text-light);margin-top:5px">🏢 ${company.name}</div>` : ''}` : '<div style="color:var(--text-muted);font-size:12px">Не указан</div>'}
+                    </div>
+                    <div class="info-card">
+                        <div class="info-card-title">Свойства</div>
+                        <div class="info-row"><span class="info-row-label">Статус</span><select onchange="updateTicketField('${t.id}','status',this.value)">${Object.entries(STATUS_LABELS).map(([k,v]) => `<option value="${k}" ${t.status===k?'selected':''}>${v}</option>`).join('')}</select></div>
+                        <div class="info-row"><span class="info-row-label">Приоритет</span><select onchange="updateTicketField('${t.id}','priority',this.value)">${Object.entries(PRIORITY_LABELS).map(([k,v]) => `<option value="${k}" ${t.priority===k?'selected':''}>${v}</option>`).join('')}</select></div>
+                        <div class="info-row"><span class="info-row-label">Исполнитель</span><select onchange="updateTicketField('${t.id}','assigneeId',this.value)"><option value="">Не назначен</option>${state.users.map(u => `<option value="${u.id}" ${t.assigneeId===u.id?'selected':''}>${u.fullName}</option>`).join('')}</select></div>
+                        <div class="info-row"><span class="info-row-label">Категория</span><select onchange="updateTicketField('${t.id}','category',this.value)">${state.categories.map(c => `<option value="${c.id}" ${t.category===c.id?'selected':''}>${c.name}</option>`).join('')}</select></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function resolveTicket(id) {
+    const t = state.tickets.find(x => x.id === id);
+    if (!t || t.status === 'solved' || t.status === 'closed') return;
+    const u = getCurrentUser();
+    t.status = 'solved';
+    t.resolvedAt = new Date().toISOString();
+    t.updatedAt = new Date().toISOString();
+    t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: '✅ Заявка отмечена как решённая', createdAt: new Date().toISOString(), system: true });
+    save();
+    toast('✅ Заявка решена');
+    renderTickets();
+    renderTicketDetail();
+}
+
+function reopenTicket(id) {
+    const t = state.tickets.find(x => x.id === id);
+    if (!t) return;
+    t.status = 'open';
+    t.resolvedAt = null;
+    t.updatedAt = new Date().toISOString();
+    t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: '🔓 Заявка открыта заново', createdAt: new Date().toISOString(), system: true });
+    save();
+    toast('🔓 Заявка открыта заново');
+    renderTickets();
+    renderTicketDetail();
+}
+
+function openPostponeModal(id) {
+    const t = state.tickets.find(x => x.id === id);
+    if (!t) return;
+    postponeTicketId = id;
+    const tomorrow = new Date(Date.now() + 86400000);
+    const localISO = new Date(tomorrow.getTime() - tomorrow.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    document.getElementById('postponeDate').value = t.dueAt ? t.dueAt.slice(0, 16) : localISO;
+    document.getElementById('postponeReason').value = t.postponeReason || '';
+    openModal('postponeModal');
+}
+
+function setPostponePreset(hours) {
+    const d = new Date(Date.now() + hours * 3600000);
+    document.getElementById('postponeDate').value = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
+
+function confirmPostpone() {
+    const dateValue = document.getElementById('postponeDate').value;
+    if (!dateValue) { toast('Укажите дату', 'error'); return; }
+    const t = state.tickets.find(x => x.id === postponeTicketId);
+    if (!t) return;
+    const reason = document.getElementById('postponeReason').value.trim();
+    const dueDate = new Date(dateValue);
+    t.status = 'pending';
+    t.dueAt = dueDate.toISOString();
+    t.postponeReason = reason;
+    t.updatedAt = new Date().toISOString();
+    t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: `⏸ Заявка отложена до ${formatDateTime(dueDate.toISOString())}${reason ? '\nПричина: ' + reason : ''}`, createdAt: new Date().toISOString(), system: true });
+    save();
+    closeModal('postponeModal');
+    toast('⏸ Заявка отложена');
+    renderTickets();
+    renderTicketDetail();
+}
+
+function sendReply() {
+    const text = document.getElementById('replyText').value.trim();
+    if (!text) { toast('Введите текст', 'error'); return; }
+    const t = state.tickets.find(x => x.id === selectedTicketId);
+    if (!t) return;
+    t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text, createdAt: new Date().toISOString() });
+    t.updatedAt = new Date().toISOString();
+    if (t.status === 'new') t.status = 'open';
+    save();
+    toast('Ответ отправлен');
+    renderTicketDetail();
+    renderTickets();
+}
+
+function updateTicketField(id, field, value) {
+    const t = state.tickets.find(x => x.id === id);
+    if (!t) return;
+    t[field] = value;
+    t.updatedAt = new Date().toISOString();
+    if (field === 'status') {
+        if ((value === 'solved' || value === 'closed') && !t.resolvedAt) t.resolvedAt = new Date().toISOString();
+        if (value !== 'solved' && value !== 'closed') t.resolvedAt = null;
+    }
+    save();
+    toast('Обновлено');
+    renderTickets();
+    renderTicketDetail();
+}
+
+function openTicketModal() {
+    document.getElementById('ticketForm').reset();
+    document.getElementById('ticketId').value = '';
+    document.getElementById('ticketModalTitle').textContent = 'Новая заявка';
+    document.getElementById('ticketClient').innerHTML = '<option value="">Выберите</option>' + state.clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    document.getElementById('ticketCategory').innerHTML = state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    document.getElementById('ticketAssignee').innerHTML = '<option value="">Не назначен</option>' + state.users.map(u => `<option value="${u.id}">${u.fullName}</option>`).join('');
+    openModal('ticketModal');
+}
+
+function saveTicket(e) {
+    e.preventDefault();
+    const id = document.getElementById('ticketId').value;
+    const data = {
+        subject: document.getElementById('ticketSubject').value,
+        clientId: document.getElementById('ticketClient').value,
+        category: document.getElementById('ticketCategory').value,
+        priority: document.getElementById('ticketPriority').value,
+        assigneeId: document.getElementById('ticketAssignee').value,
+        description: document.getElementById('ticketDescription').value,
+        updatedAt: new Date().toISOString()
+    };
+    if (id) {
+        Object.assign(state.tickets.find(x => x.id === id), data);
+        toast('Заявка обновлена');
+    } else {
+        const maxNum = state.tickets.reduce((m, t) => Math.max(m, parseInt(t.number.replace('HD-', ''))), 1000);
+        const newT = {
+            id: 't' + Date.now(), number: 'HD-' + (maxNum + 1), ...data,
+            status: 'new', createdAt: new Date().toISOString(), resolvedAt: null,
+            comments: [{ id: 'cm' + Date.now(), authorId: data.clientId, authorType: 'client', text: data.description, createdAt: new Date().toISOString() }],
+            history: []
+        };
+        state.tickets.push(newT);
+        selectedTicketId = newT.id;
+        toast('Заявка создана');
+    }
+    save();
+    closeModal('ticketModal');
+    renderTickets();
+    renderTicketDetail();
+}
+
+// ============ CLIENTS ============
+function renderClients() {
+    const tbody = document.getElementById('clientsTable');
+    if (state.clients.length === 0) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">👥</div><p>Нет заявителей</p></div></td></tr>'; return; }
+    tbody.innerHTML = state.clients.map(c => {
+        const ticketCount = state.tickets.filter(t => t.clientId === c.id).length;
+        const company = c.companyId ? getCompany(c.companyId) : null;
+        return `<tr><td><span class="avatar-small">${getInitials(c.name)}</span>${c.name}</td><td>${c.email}</td><td>${c.phone || '—'}</td><td>${company ? company.name : '—'}</td><td><strong>${ticketCount}</strong></td><td class="actions-cell"><button class="btn btn-small" onclick="openClientModal('${c.id}')">✏️</button><button class="btn btn-small btn-danger" onclick="deleteClient('${c.id}')">🗑️</button></td></tr>`;
+    }).join('');
+}
+
+function openClientModal(id = null) {
+    document.getElementById('clientForm').reset();
+    document.getElementById('clientId').value = '';
+    document.getElementById('clientModalTitle').textContent = 'Новый заявитель';
+    document.getElementById('clientCompany').innerHTML = '<option value="">Без компании</option>' + state.companies.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    if (id) {
+        const c = getClient(id);
+        document.getElementById('clientId').value = c.id;
+        document.getElementById('clientName').value = c.name;
+        document.getElementById('clientEmail').value = c.email;
+        document.getElementById('clientPhone').value = c.phone || '';
+        document.getElementById('clientCompany').value = c.companyId || '';
+        document.getElementById('clientModalTitle').textContent = 'Редактировать';
+    }
+    openModal('clientModal');
+}
+
+function saveClient(e) {
+    e.preventDefault();
+    const id = document.getElementById('clientId').value;
+    const data = { name: document.getElementById('clientName').value, email: document.getElementById('clientEmail').value, phone: document.getElementById('clientPhone').value, companyId: document.getElementById('clientCompany').value };
+    if (id) Object.assign(getClient(id), data);
+    else state.clients.push({ id: 'c' + Date.now(), ...data, createdAt: new Date().toISOString() });
+    save();
+    closeModal('clientModal');
+    renderClients();
+    toast(id ? 'Обновлено' : 'Добавлено');
+}
+
+function deleteClient(id) {
+    if (!confirm('Удалить заявителя?')) return;
+    state.clients = state.clients.filter(c => c.id !== id);
+    save();
+    renderClients();
+}
+
+// ============ COMPANIES ============
+function renderCompanies() {
+    const tbody = document.getElementById('companiesTable');
+    if (state.companies.length === 0) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><p>Нет компаний</p></div></td></tr>'; return; }
+    tbody.innerHTML = state.companies.map(c => {
+        const clientCount = state.clients.filter(cl => cl.companyId === c.id).length;
+        const ticketCount = state.tickets.filter(t => { const cl = getClient(t.clientId); return cl && cl.companyId === c.id; }).length;
+        return `<tr><td><strong>${c.name}</strong></td><td>${c.domain || '—'}</td><td>${clientCount}</td><td>${ticketCount}</td><td class="actions-cell"><button class="btn btn-small" onclick="openCompanyModal('${c.id}')">✏️</button><button class="btn btn-small btn-danger" onclick="deleteCompany('${c.id}')">🗑️</button></td></tr>`;
+    }).join('');
+}
+
+function openCompanyModal(id = null) {
+    document.getElementById('companyForm').reset();
+    document.getElementById('companyId').value = '';
+    document.getElementById('companyModalTitle').textContent = 'Новая компания';
+    if (id) {
+        const c = getCompany(id);
+        document.getElementById('companyId').value = c.id;
+        document.getElementById('companyName').value = c.name;
+        document.getElementById('companyDomain').value = c.domain || '';
+        document.getElementById('companyModalTitle').textContent = 'Редактировать';
+    }
+    openModal('companyModal');
+}
+
+function saveCompany(e) {
+    e.preventDefault();
+    const id = document.getElementById('companyId').value;
+    const data = { name: document.getElementById('companyName').value, domain: document.getElementById('companyDomain').value };
+    if (id) Object.assign(getCompany(id), data);
+    else state.companies.push({ id: 'co' + Date.now(), ...data, createdAt: new Date().toISOString() });
+    save();
+    closeModal('companyModal');
+    renderCompanies();
+}
+
+function deleteCompany(id) {
+    if (!confirm('Удалить?')) return;
+    state.companies = state.companies.filter(c => c.id !== id);
+    state.clients.forEach(c => { if (c.companyId === id) c.companyId = ''; });
+    save();
+    renderCompanies();
+}
+
+// ============ STAFF (для обычных сотрудников — просмотр коллег) ============
+function renderStaff() {
+    const tbody = document.getElementById('staffTable');
+    tbody.innerHTML = state.users.map(u => {
+        const dep = getDepartment(u.departmentId);
+        const open = state.tickets.filter(t => t.assigneeId === u.id && !['solved','closed'].includes(t.status)).length;
+        const solved = state.tickets.filter(t => t.assigneeId === u.id && (t.status === 'solved' || t.status === 'closed')).length;
+        return `<tr><td><span class="avatar-small">${getInitials(u.fullName)}</span>${u.fullName}${u.id === CURRENT_USER_ID ? ' <span style="font-size:10px;color:var(--primary);font-weight:600">← вы</span>' : ''}</td><td>${u.phone}</td><td>${dep ? `<span style="display:inline-block;padding:2px 8px;border-radius:10px;background:${dep.color}22;color:${dep.color};font-size:11px;font-weight:500">${dep.name}</span>` : '—'}</td><td><span class="role-badge role-${u.role}">${ROLE_LABELS[u.role]}</span></td><td><strong>${open}</strong></td><td><strong>${solved}</strong></td></tr>`;
+    }).join('');
+}
+
+// ============ DEPARTMENTS (admin) ============
+function renderDepartments() {
+    if (!isAdmin()) return;
+    const list = document.getElementById('departmentsList');
+    if (state.departments.length === 0) { list.innerHTML = '<div class="empty-state"><p>Нет отделов</p></div>'; return; }
+    list.innerHTML = state.departments.map(d => {
+        const members = state.users.filter(u => u.departmentId === d.id);
+        return `
+            <div class="card" style="margin-bottom:12px;padding:15px">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <div style="width:40px;height:40px;border-radius:10px;background:${d.color};display:flex;align-items:center;justify-content:center;color:white;font-size:18px">🏛</div>
+                        <div>
+                            <div style="font-weight:600;font-size:15px">${d.name}</div>
+                            <div style="font-size:12px;color:var(--text-light)">${d.description || 'Без описания'}</div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:5px">
+                        <button class="btn btn-small" onclick="openDepartmentModal('${d.id}')">✏️</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteDepartment('${d.id}')">🗑️</button>
+                    </div>
+                </div>
+                <div style="font-size:12px;color:var(--text-light);margin-bottom:8px">👥 Сотрудники (${members.length}):</div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px">
+                    ${members.length ? members.map(u => `<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:var(--bg);border-radius:15px;font-size:12px"><span class="avatar-small" style="width:20px;height:20px;font-size:9px;margin:0">${getInitials(u.fullName)}</span>${u.fullName}${u.role === 'admin' ? ' <span style="font-size:9px;background:#fef3c7;color:#92400e;padding:1px 5px;border-radius:8px">ADMIN</span>' : ''}</span>`).join('') : '<span style="font-size:12px;color:var(--text-muted);font-style:italic">Нет сотрудников</span>'}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function openDepartmentModal(id = null) {
+    if (!isAdmin()) return;
+    document.getElementById('departmentForm').reset();
+    document.getElementById('departmentId').value = '';
+    document.getElementById('departmentModalTitle').textContent = 'Новый отдел';
+    if (id) {
+        const d = getDepartment(id);
+        document.getElementById('departmentId').value = d.id;
+        document.getElementById('departmentName').value = d.name;
+        document.getElementById('departmentDescription').value = d.description || '';
+        document.getElementById('departmentColor').value = d.color || '#10b981';
+        document.getElementById('departmentModalTitle').textContent = 'Редактировать отдел';
+    }
+    openModal('departmentModal');
+}
+
+function saveDepartment(e) {
+    e.preventDefault();
+    const id = document.getElementById('departmentId').value;
+    const data = {
+        name: document.getElementById('departmentName').value,
+        description: document.getElementById('departmentDescription').value,
+        color: document.getElementById('departmentColor').value
+    };
+    if (id) Object.assign(getDepartment(id), data);
+    else state.departments.push({ id: 'dep' + Date.now(), ...data, createdAt: new Date().toISOString() });
+    save();
+    closeModal('departmentModal');
+    renderDepartments();
+    toast(id ? 'Отдел обновлён' : 'Отдел создан');
+}
+
+function deleteDepartment(id) {
+    if (!isAdmin()) return;
+    if (!confirm('Удалить отдел? Сотрудники останутся без отдела.')) return;
+    state.departments = state.departments.filter(d => d.id !== id);
+    state.users.forEach(u => { if (u.departmentId === id) u.departmentId = ''; });
+    save();
+    renderDepartments();
+}
+
+// ============ USERS (admin) ============
+function renderUsers() {
+    if (!isAdmin()) return;
+    const tbody = document.getElementById('usersTable');
+    tbody.innerHTML = state.users.map(u => {
+        const dep = getDepartment(u.departmentId);
+        return `
+            <tr>
+                <td><span class="avatar-small">${getInitials(u.fullName)}</span>${u.fullName}${u.id === CURRENT_USER_ID ? ' <span style="font-size:10px;color:var(--primary);font-weight:600">← вы</span>' : ''}</td>
+                <td>${u.phone}</td>
+                <td>${dep ? dep.name : '<span style="color:var(--text-muted)">—</span>'}</td>
+                <td><span class="role-badge role-${u.role}">${ROLE_LABELS[u.role]}</span></td>
+                <td><span class="pin-display">${u.pin}</span></td>
+                <td style="font-size:11px;color:var(--text-light)">${formatDate(u.createdAt)}</td>
+                <td class="actions-cell">
+                    <button class="btn btn-small" onclick="openUserModal('${u.id}')">✏️</button>
+                    ${u.id !== CURRENT_USER_ID ? `<button class="btn btn-small btn-danger" onclick="deleteUser('${u.id}')">🗑️</button>` : ''}
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function openUserModal(id) {
+    if (!isAdmin()) return;
+    const u = getUser(id);
+    if (!u) return;
+    document.getElementById('userForm').reset();
+    document.getElementById('userId').value = u.id;
+    document.getElementById('userFullName').value = u.fullName;
+    document.getElementById('userPhone').value = u.phone;
+    document.getElementById('userRole').value = u.role;
+    document.getElementById('userPin').value = '';
+    document.getElementById('userDepartment').innerHTML = '<option value="">Без отдела</option>' + state.departments.map(d => `<option value="${d.id}" ${u.departmentId === d.id ? 'selected' : ''}>${d.name}</option>`).join('');
+    document.getElementById('userModalTitle').textContent = 'Редактировать: ' + u.fullName;
+    openModal('userModal');
+}
+
+function saveUser(e) {
+    e.preventDefault();
+    const id = document.getElementById('userId').value;
+    const u = getUser(id);
+    if (!u) return;
+    const newPin = document.getElementById('userPin').value;
+    u.fullName = document.getElementById('userFullName').value;
+    u.phone = document.getElementById('userPhone').value;
+    u.departmentId = document.getElementById('userDepartment').value;
+    u.role = document.getElementById('userRole').value;
+    if (newPin && /^\d{4}$/.test(newPin)) u.pin = newPin;
+    else if (newPin && !/^\d{4}$/.test(newPin)) { toast('Пин должен быть 4 цифры', 'error'); return; }
+    save();
+    closeModal('userModal');
+    renderUsers();
+    toast('Пользователь обновлён');
+}
+
+function deleteUser(id) {
+    if (!isAdmin()) return;
+    if (id === CURRENT_USER_ID) { toast('Нельзя удалить себя', 'error'); return; }
+    if (!confirm('Удалить пользователя? Все его заявки останутся без исполнителя.')) return;
+    state.users = state.users.filter(u => u.id !== id);
+    state.tickets.forEach(t => { if (t.assigneeId === id) t.assigneeId = ''; });
+    save();
+    renderUsers();
+    toast('Пользователь удалён');
+}
+
+// ============ DASHBOARD ============
+function renderDashboard() {
+    const total = state.tickets.length;
+    const open = state.tickets.filter(t => ['new','open','pending'].includes(t.status)).length;
+    const solved = state.tickets.filter(t => t.status === 'solved' || t.status === 'closed').length;
+    const myOpen = state.tickets.filter(t => t.assigneeId === CURRENT_USER_ID && !['solved','closed'].includes(t.status)).length;
+    const mySolved = state.tickets.filter(t => t.assigneeId === CURRENT_USER_ID && (t.status === 'solved' || t.status === 'closed')).length;
+
+    document.getElementById('dashboardContent').innerHTML = `
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">Всего заявок</div><div class="stat-value">${total}</div></div>
+            <div class="stat-card"><div class="stat-label">Открытых</div><div class="stat-value" style="color:var(--warning)">${open}</div></div>
+            <div class="stat-card"><div class="stat-label">Решённых</div><div class="stat-value" style="color:var(--success)">${solved}</div></div>
+            <div class="stat-card"><div class="stat-label">Мои открытые</div><div class="stat-value">${myOpen}</div></div>
+            <div class="stat-card"><div class="stat-label">Мои решённые</div><div class="stat-value" style="color:var(--success)">${mySolved}</div></div>
+            <div class="stat-card"><div class="stat-label">Сотрудников</div><div class="stat-value">${state.users.length}</div></div>
+        </div>
+        <div class="report-card"><h3>📊 По статусам</h3><div class="bar-chart" id="dashChart1"></div></div>
+        <div class="report-card"><h3>👥 Загрузка сотрудников</h3><div class="bar-chart" id="dashChart2"></div></div>
+    `;
+    renderBarChart('dashChart1', Object.entries(STATUS_LABELS).map(([k,v]) => ({ label: v, value: state.tickets.filter(t => t.status === k).length })));
+    renderBarChart('dashChart2', state.users.map(u => ({ label: u.fullName.split(' ')[0], value: state.tickets.filter(t => t.assigneeId === u.id && !['solved','closed'].includes(t.status)).length })));
+}
+
+function renderBarChart(id, data) {
+    const max = Math.max(...data.map(d => d.value), 1);
+    document.getElementById(id).innerHTML = data.map(d => `<div class="bar-row"><div class="bar-label">${d.label}</div><div class="bar-track"><div class="bar-fill" style="width:${(d.value/max)*100}%">${d.value > 0 ? d.value : ''}</div></div><div class="bar-value">${d.value}</div></div>`).join('');
+}
+
+// ============ REPORTS ============
+function renderReports() {
+    const total = state.tickets.length;
+    const solved = state.tickets.filter(t => t.status === 'solved' || t.status === 'closed').length;
+    const rate = total ? Math.round((solved/total)*100) : 0;
+    document.getElementById('reportsContent').innerHTML = `
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">Всего</div><div class="stat-value">${total}</div></div>
+            <div class="stat-card"><div class="stat-label">% решённых</div><div class="stat-value" style="color:var(--success)">${rate}%</div></div>
+            <div class="stat-card"><div class="stat-label">Сотрудников</div><div class="stat-value">${state.users.length}</div></div>
+            <div class="stat-card"><div class="stat-label">Отделов</div><div class="stat-value">${state.departments.length}</div></div>
+        </div>
+        <div class="report-card"><h3>📂 По категориям</h3><div class="bar-chart" id="rep1"></div></div>
+        <div class="report-card"><h3>🎯 По приоритетам</h3><div class="bar-chart" id="rep2"></div></div>
+        <div class="report-card"><h3>👥 Производительность</h3>
+            <table style="width:100%"><thead><tr><th>Сотрудник</th><th>Отдел</th><th>Открытых</th><th>Решено</th></tr></thead><tbody>
+                ${state.users.map(u => {
+                    const dep = getDepartment(u.departmentId);
+                    const open = state.tickets.filter(t => t.assigneeId === u.id && !['solved','closed'].includes(t.status)).length;
+                    const solved = state.tickets.filter(t => t.assigneeId === u.id && (t.status === 'solved' || t.status === 'closed')).length;
+                    return `<tr><td>${u.fullName}</td><td>${dep ? dep.name : '—'}</td><td>${open}</td><td>${solved}</td></tr>`;
+                }).join('')}
+            </tbody></table>
+        </div>
+    `;
+    renderBarChart('rep1', state.categories.map(c => ({ label: c.name, value: state.tickets.filter(t => t.category === c.id).length })));
+    renderBarChart('rep2', Object.entries(PRIORITY_LABELS).map(([k,v]) => ({ label: v, value: state.tickets.filter(t => t.priority === k).length })));
+}
+
+// ============ SETTINGS ============
+let currentSettingsTab = 'profile';
+document.querySelectorAll('.settings-nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+        document.querySelectorAll('.settings-nav-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        currentSettingsTab = item.dataset.settings;
+        renderSettings();
+    });
+});
+
+function renderSettings() {
+    const c = document.getElementById('settingsContent');
+    if (currentSettingsTab === 'profile') {
+        const u = getCurrentUser();
+        const dep = getDepartment(u.departmentId);
+        c.innerHTML = `
+            <div class="settings-section">
+                <h3>👤 Мой профиль</h3>
+                <div style="display:flex;gap:15px;align-items:center;margin-bottom:20px;padding:15px;background:var(--bg);border-radius:8px">
+                    <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#10b981,#34d399);color:white;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:600">${getInitials(u.fullName)}</div>
+                    <div>
+                        <div style="font-size:16px;font-weight:600">${u.fullName}</div>
+                        <div style="font-size:12px;color:var(--text-light)">${u.phone}</div>
+                        <div style="font-size:12px;color:var(--text-light);margin-top:3px">${dep ? dep.name : 'Без отдела'} • <span class="role-badge role-${u.role}">${ROLE_LABELS[u.role]}</span></div>
+                    </div>
+                </div>
+                <div class="form-group"><label>ФИО</label><input type="text" id="profileFullName" value="${u.fullName}"></div>
+                <div class="form-group"><label>Телефон</label><input type="tel" id="profilePhone" value="${u.phone}"></div>
+                ${isAdmin() ? '' : `<div class="form-group"><label>Отдел</label><div style="padding:8px;background:var(--bg);border-radius:5px;font-size:13px">${dep ? dep.name : '—'} <span style="font-size:11px;color:var(--text-muted)">(изменяет администратор)</span></div></div>`}
+                <div class="form-group"><label>Новый пин-код (4 цифры, оставьте пустым чтобы не менять)</label><input type="password" id="profilePin" class="pin-input" maxlength="4" inputmode="numeric" placeholder="••••"></div>
+                <button class="btn btn-primary" onclick="saveProfile()">💾 Сохранить</button>
+            </div>
+        `;
+    } else if (currentSettingsTab === 'general' && isAdmin()) {
+        c.innerHTML = `<div class="settings-section"><h3>🎪 Общие настройки</h3><div class="form-group"><label>Название компании</label><input type="text" id="setCompanyName" value="${state.settings.companyName || ''}"></div><div class="form-group"><label>Тема</label><select id="setTheme"><option value="light" ${state.settings.theme==='light'?'selected':''}>🌿 Светлая</option><option value="dark" ${state.settings.theme==='dark'?'selected':''}>🌑 Тёмная</option></select></div><button class="btn btn-primary" onclick="saveGeneralSettings()">💾 Сохранить</button></div>`;
+    } else if (currentSettingsTab === 'categories' && isAdmin()) {
+        c.innerHTML = `<div class="settings-section"><h3>📂 Категории</h3><div>${state.categories.map(cat => `<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;padding:8px;background:var(--bg);border-radius:6px"><input type="color" value="${cat.color}" onchange="updateCategory('${cat.id}','color',this.value)" style="width:40px;height:30px;border:none;cursor:pointer"><input type="text" value="${cat.name}" onchange="updateCategory('${cat.id}','name',this.value)" style="flex:1;padding:5px;border:1px solid var(--border);border-radius:4px;background:var(--card);color:var(--text)"><button class="btn btn-small btn-danger" onclick="deleteCategory('${cat.id}')">×</button></div>`).join('')}</div></div>`;
+    } else if (currentSettingsTab === 'data' && isAdmin()) {
+        c.innerHTML = `<div class="settings-section"><h3>💾 Данные</h3><div style="padding:12px;background:#fee2e2;border-radius:6px;color:#991b1b"><strong>⚠️ Опасная зона</strong><div style="margin-top:8px;display:flex;gap:10px"><button class="btn btn-danger btn-small" onclick="resetDemoData()">🔄 Сбросить всё</button></div></div></div>`;
+    } else {
+        c.innerHTML = `<div class="empty-state"><p>Нет доступа</p></div>`;
+    }
+}
+
+function saveProfile() {
+    const u = getCurrentUser();
+    u.fullName = document.getElementById('profileFullName').value;
+    u.phone = document.getElementById('profilePhone').value;
+    const newPin = document.getElementById('profilePin').value;
+    if (newPin) {
+        if (!/^\d{4}$/.test(newPin)) { toast('Пин должен быть 4 цифры', 'error'); return; }
+        u.pin = newPin;
+    }
+    save();
+    renderCurrentUser();
+    toast('Профиль обновлён');
+    renderSettings();
+}
+
+function saveGeneralSettings() {
+    state.settings.companyName = document.getElementById('setCompanyName').value;
+    state.settings.theme = document.getElementById('setTheme').value;
+    document.documentElement.setAttribute('data-theme', state.settings.theme);
+    save();
+    toast('Сохранено');
+}
+
+function updateCategory(id, field, value) { const c = getCategory(id); if (c) { c[field] = value; save(); } }
+function deleteCategory(id) { if (!confirm('Удалить?')) return; state.categories = state.categories.filter(c => c.id !== id); save(); renderSettings(); }
+function resetDemoData() { if (!confirm('Сбросить все данные?')) return; Object.keys(localStorage).filter(k => k.startsWith('hd_')).forEach(k => localStorage.removeItem(k)); location.reload(); }
+
+// ============ INIT ============
+seedData();
+if (state.settings.theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+checkAuth();
+
+console.log('%c🎪 Ярмарка CRM', 'color:#10b981;font-size:16px;font-weight:bold');
+console.log('%c🔐 Администратор: пин 1408', 'color:#f59e0b;font-size:12px');
+</script>
+</body>
+</html>
