@@ -19,30 +19,12 @@
 }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; font-size: 14px; transition: background 0.2s, color 0.2s; }
 
-/* ============ LOGIN SCREEN ============ */
-.login-screen {
-    position: fixed; inset: 0; z-index: 9999;
-    background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #10b981 100%);
-    display: flex; align-items: center; justify-content: center;
-    padding: 20px;
-}
-.login-screen::before {
-    content: ''; position: absolute; inset: 0;
-    background-image: radial-gradient(circle at 20% 30%, rgba(52, 211, 153, 0.3) 0%, transparent 50%),
-                      radial-gradient(circle at 80% 70%, rgba(16, 185, 129, 0.2) 0%, transparent 50%);
-}
-.login-container {
-    position: relative; background: white; border-radius: 16px;
-    width: 100%; max-width: 440px; padding: 35px;
-    box-shadow: 0 25px 60px rgba(0,0,0,0.3);
-}
+/* ============ LOGIN ============ */
+.login-screen { position: fixed; inset: 0; z-index: 9999; background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #10b981 100%); display: flex; align-items: center; justify-content: center; padding: 20px; }
+.login-screen::before { content: ''; position: absolute; inset: 0; background-image: radial-gradient(circle at 20% 30%, rgba(52, 211, 153, 0.3) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(16, 185, 129, 0.2) 0%, transparent 50%); }
+.login-container { position: relative; background: white; border-radius: 16px; width: 100%; max-width: 440px; padding: 35px; box-shadow: 0 25px 60px rgba(0,0,0,0.3); }
 [data-theme="dark"] .login-container { background: #064e3b; }
-.login-logo {
-    width: 64px; height: 64px; margin: 0 auto 15px;
-    background: linear-gradient(135deg, #10b981, #34d399);
-    border-radius: 16px; display: flex; align-items: center; justify-content: center;
-    font-size: 32px; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
-}
+.login-logo { width: 64px; height: 64px; margin: 0 auto 15px; background: linear-gradient(135deg, #10b981, #34d399); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 32px; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4); }
 .login-title { text-align: center; font-size: 22px; font-weight: 700; color: #064e3b; margin-bottom: 5px; }
 [data-theme="dark"] .login-title { color: #ecfdf5; }
 .login-subtitle { text-align: center; font-size: 13px; color: var(--text-light); margin-bottom: 25px; }
@@ -53,47 +35,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .login-form.active { display: block; }
 .login-field { margin-bottom: 14px; }
 .login-field label { display: block; font-size: 12px; font-weight: 500; margin-bottom: 5px; color: var(--text); }
-.login-field input, .login-field select {
-    width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
-    font-size: 14px; background: var(--card); color: var(--text); font-family: inherit;
-}
+.login-field input, .login-field select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--card); color: var(--text); font-family: inherit; }
 .login-field input:focus, .login-field select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15); }
-.pin-input {
-    letter-spacing: 12px; text-align: center; font-size: 22px; font-weight: 600;
-    font-family: 'Courier New', monospace;
-}
+.pin-input { letter-spacing: 12px; text-align: center; font-size: 22px; font-weight: 600; font-family: 'Courier New', monospace; }
 .pin-input::-webkit-outer-spin-button, .pin-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.login-btn {
-    width: 100%; padding: 11px; background: var(--primary); color: white; border: none;
-    border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
-    transition: all 0.15s; margin-top: 5px;
-}
+.login-btn { width: 100%; padding: 11px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; margin-top: 5px; }
 .login-btn:hover { background: var(--primary-hover); }
-.login-btn.secondary { background: transparent; color: var(--primary); border: 1px solid var(--primary); margin-top: 10px; }
-.login-btn.secondary:hover { background: var(--primary-light); }
 .login-error { background: #fee2e2; color: #991b1b; padding: 10px; border-radius: 6px; font-size: 12px; margin-bottom: 12px; display: none; }
 .login-error.show { display: block; }
-.login-hint { font-size: 11px; color: var(--text-muted); margin-top: 15px; text-align: center; padding-top: 15px; border-top: 1px solid var(--border); }
 .user-picker { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; margin-bottom: 12px; padding: 4px; border: 1px solid var(--border); border-radius: 8px; }
-.user-pick-item {
-    padding: 10px 12px; border-radius: 6px; cursor: pointer;
-    display: flex; align-items: center; gap: 10px; transition: all 0.15s;
-    border: 1px solid transparent;
-}
+.user-pick-item { padding: 10px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.15s; border: 1px solid transparent; }
 .user-pick-item:hover { background: var(--bg); }
 .user-pick-item.selected { background: var(--primary-light); border-color: var(--primary); }
-.user-pick-avatar {
-    width: 32px; height: 32px; border-radius: 50%;
-    background: linear-gradient(135deg, #10b981, #34d399); color: white;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 600; flex-shrink: 0;
-}
+.user-pick-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #34d399); color: white; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; flex-shrink: 0; }
 .user-pick-info { flex: 1; min-width: 0; }
 .user-pick-name { font-size: 13px; font-weight: 500; }
 .user-pick-role { font-size: 10px; color: var(--text-light); }
 .user-pick-badge { font-size: 9px; padding: 2px 6px; border-radius: 8px; background: var(--primary); color: white; font-weight: 600; }
 
-/* ============ MAIN APP ============ */
+/* ============ MAIN ============ */
 .sidebar { width: 240px; background: var(--sidebar); color: white; position: fixed; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; z-index: 100; }
 .sidebar-header { padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px; }
 .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, #10b981, #34d399); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4); }
@@ -111,7 +71,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .user-info { flex: 1; min-width: 0; }
 .user-name { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .user-role { font-size: 10px; color: #6ee7b7; }
-.logout-btn { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; padding: 4px 8px; border-radius: 5px; font-size: 11px; cursor: pointer; transition: all 0.15s; }
+.logout-btn { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; padding: 4px 8px; border-radius: 5px; font-size: 11px; cursor: pointer; }
 .logout-btn:hover { background: rgba(239, 68, 68, 0.2); border-color: #ef4444; }
 
 .main-content { margin-left: 240px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; width: calc(100% - 240px); }
@@ -121,8 +81,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .search-global { position: relative; }
 .search-global input { padding: 7px 12px 7px 32px; border: 1px solid var(--border); border-radius: 6px; width: 260px; font-size: 13px; background: var(--bg); color: var(--text); }
 .search-global::before { content: '🔍'; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 12px; }
-.icon-btn { width: 34px; height: 34px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 15px; position: relative; color: var(--text); }
-.icon-btn:hover { background: var(--bg); }
 .page { display: none; flex: 1; }
 .page.active { display: flex; flex-direction: column; }
 .btn { padding: 7px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.15s; display: inline-flex; align-items: center; gap: 5px; font-family: inherit; color: var(--text); background: var(--card); border: 1px solid var(--border); }
@@ -131,15 +89,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .btn-primary:hover { background: var(--primary-hover); }
 .btn-danger { background: var(--danger); color: white; border-color: var(--danger); }
 .btn-warning { background: var(--warning); color: white; border-color: var(--warning); }
+.btn-info { background: var(--info); color: white; border-color: var(--info); }
 .btn-ghost { background: transparent; border-color: transparent; color: var(--text-light); }
 .btn-ghost:hover { background: var(--bg); color: var(--text); }
 .btn-small { padding: 4px 9px; font-size: 12px; }
 
-/* Tickets layout */
 .tickets-layout { display: flex; flex: 1; overflow: hidden; }
 .tickets-list-panel { width: 42%; border-right: 1px solid var(--border); background: var(--card); display: flex; flex-direction: column; overflow: hidden; }
 .tickets-detail-panel { flex: 1; background: var(--bg); overflow-y: auto; }
-.tickets-toolbar { padding: 10px 15px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: center; background: var(--card); }
 .tickets-filters { padding: 10px 15px; border-bottom: 1px solid var(--border); background: var(--card); }
 .filter-tabs { display: flex; gap: 3px; margin-bottom: 8px; flex-wrap: wrap; }
 .filter-tab { padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; color: var(--text-light); transition: all 0.15s; display: flex; align-items: center; gap: 5px; }
@@ -153,6 +110,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .ticket-item { padding: 12px 15px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; display: flex; gap: 10px; }
 .ticket-item:hover { background: var(--bg); }
 .ticket-item.active { background: var(--primary-light); border-left: 3px solid var(--primary); padding-left: 12px; }
+.ticket-item.is-recurring-template { border-left: 3px solid #8b5cf6; }
 .ticket-priority-bar { width: 3px; border-radius: 2px; flex-shrink: 0; }
 .priority-low { background: #9ca3af; } .priority-medium { background: #3b82f6; }
 .priority-high { background: #f59e0b; } .priority-urgent { background: #ef4444; }
@@ -169,6 +127,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .status-pending { background: #e0e7ff; color: #3730a3; }
 .status-solved { background: #a7f3d0; color: #064e3b; font-weight: 600; }
 .status-closed { background: #e5e7eb; color: #374151; }
+.recurring-indicator { background: #ede9fe; color: #6b21a8; font-size: 10px; padding: 1px 6px; border-radius: 8px; font-weight: 600; }
+[data-theme="dark"] .recurring-indicator { background: #581c87; color: #e9d5ff; }
 
 .ticket-detail-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); padding: 40px; text-align: center; }
 .empty-icon { font-size: 60px; margin-bottom: 15px; opacity: 0.3; }
@@ -207,7 +167,38 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .btn-postpone { background: var(--warning); color: white; border-color: var(--warning); padding: 8px 16px; font-weight: 600; border: none; border-radius: 6px; cursor: pointer; }
 .ticket-action-bar { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 
-/* Modal */
+.resolved-banner { background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: #065f46; padding: 12px 16px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 12px; font-size: 13px; }
+[data-theme="dark"] .resolved-banner { background: linear-gradient(135deg, #064e3b, #065f46); color: #a7f3d0; }
+.resolved-banner-icon { font-size: 24px; }
+.resolved-banner-info { flex: 1; }
+.resolved-banner-title { font-weight: 600; font-size: 14px; }
+.resolved-banner-sub { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+.postponed-banner { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #92400e; padding: 12px 16px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 12px; font-size: 13px; }
+[data-theme="dark"] .postponed-banner { background: linear-gradient(135deg, #78350f, #92400e); color: #fde68a; }
+.postponed-banner-icon { font-size: 24px; }
+.postponed-banner-info { flex: 1; }
+.recurring-banner { background: linear-gradient(135deg, #e0e7ff, #c7d2fe); color: #3730a3; padding: 12px 16px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 12px; font-size: 13px; border: 1px solid #a5b4fc; }
+[data-theme="dark"] .recurring-banner { background: linear-gradient(135deg, #312e81, #3730a3); color: #c7d2fe; border-color: #4338ca; }
+.recurring-banner-icon { font-size: 24px; }
+.recurring-banner-info { flex: 1; }
+.recurring-banner-title { font-weight: 600; font-size: 14px; }
+.recurring-banner-sub { font-size: 11px; opacity: 0.9; margin-top: 2px; }
+.recurring-instance-banner { background: linear-gradient(135deg, #f3e8ff, #e9d5ff); color: #6b21a8; padding: 10px 14px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; font-size: 12px; border: 1px solid #d8b4fe; }
+[data-theme="dark"] .recurring-instance-banner { background: linear-gradient(135deg, #581c87, #6b21a8); color: #e9d5ff; border-color: #7e22ce; }
+
+.recurrence-section { background: linear-gradient(135deg, #f5f3ff, #ede9fe); border: 1px solid #c4b5fd; border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+[data-theme="dark"] .recurrence-section { background: linear-gradient(135deg, #2e1065, #3b0764); border-color: #6b21a8; }
+.recurrence-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.recurrence-header label { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; color: #6b21a8; cursor: pointer; }
+[data-theme="dark"] .recurrence-header label { color: #e9d5ff; }
+.recurrence-config { display: none; }
+.recurrence-config.active { display: block; }
+.recurrence-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.recurrence-presets { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; }
+.recurrence-presets button { padding: 5px 10px; font-size: 11px; border: 1px solid var(--border); background: var(--card); border-radius: 5px; cursor: pointer; color: var(--text); }
+.recurrence-presets button:hover { background: var(--primary-light); border-color: var(--primary); }
+.recurrence-presets button.active { background: #8b5cf6; color: white; border-color: #8b5cf6; }
+
 .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
 .modal.active { display: flex; }
 .modal-content { background: var(--card); border-radius: 10px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; color: var(--text); }
@@ -224,7 +215,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .form-hint { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
 
-/* Page content */
 .page-content { padding: 20px 25px; overflow-y: auto; flex: 1; }
 .card { background: var(--card); border-radius: 8px; border: 1px solid var(--border); overflow: hidden; }
 table { width: 100%; border-collapse: collapse; }
@@ -237,7 +227,6 @@ tr:hover td { background: var(--bg); }
 .empty-state { text-align: center; padding: 50px 20px; color: var(--text-muted); }
 .empty-state-icon { font-size: 45px; margin-bottom: 12px; opacity: 0.3; }
 
-/* Settings */
 .settings-layout { display: grid; grid-template-columns: 220px 1fr; gap: 20px; flex: 1; overflow: hidden; }
 .settings-nav { background: var(--card); border-right: 1px solid var(--border); padding: 15px; overflow-y: auto; }
 .settings-nav-item { padding: 8px 12px; cursor: pointer; border-radius: 5px; font-size: 13px; margin-bottom: 3px; }
@@ -247,7 +236,6 @@ tr:hover td { background: var(--bg); }
 .settings-section { margin-bottom: 25px; }
 .settings-section h3 { font-size: 15px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); color: var(--primary-dark); }
 
-/* Dashboard */
 .reports-content { padding: 25px; overflow-y: auto; flex: 1; }
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
 .stat-card { background: var(--card); padding: 15px; border-radius: 8px; border: 1px solid var(--border); position: relative; overflow: hidden; }
@@ -263,17 +251,16 @@ tr:hover td { background: var(--bg); }
 .bar-fill { height: 100%; background: linear-gradient(90deg, #10b981, #34d399); display: flex; align-items: center; padding-left: 8px; color: white; font-size: 11px; font-weight: 500; }
 .bar-value { width: 40px; text-align: right; font-weight: 600; font-size: 12px; }
 
-/* Toast */
 .toast { position: fixed; bottom: 20px; right: 20px; background: var(--text); color: white; padding: 10px 18px; border-radius: 6px; font-size: 13px; z-index: 2000; opacity: 0; transform: translateY(20px); transition: all 0.3s; }
 .toast.show { opacity: 1; transform: translateY(0); }
 .toast.success { background: var(--success); }
 .toast.error { background: var(--danger); }
 
-/* Pin display */
 .pin-display { font-family: 'Courier New', monospace; font-weight: 700; letter-spacing: 3px; background: var(--bg); padding: 3px 10px; border-radius: 5px; font-size: 13px; color: var(--primary-dark); border: 1px dashed var(--border); }
 .role-badge { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
 .role-admin { background: #fef3c7; color: #92400e; }
 .role-staff { background: #dbeafe; color: #1e40af; }
+.dept-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 500; }
 
 @media (max-width: 1100px) {
     .ticket-detail-body { grid-template-columns: 1fr; }
@@ -283,19 +270,16 @@ tr:hover td { background: var(--bg); }
 </head>
 <body>
 
-<!-- ============ LOGIN SCREEN ============ -->
+<!-- LOGIN -->
 <div class="login-screen" id="loginScreen">
     <div class="login-container">
         <div class="login-logo">🎪</div>
         <div class="login-title">Ярмарка CRM</div>
         <div class="login-subtitle">Система управления заявками</div>
-
         <div class="login-tabs">
             <div class="login-tab active" onclick="switchLoginTab('login')">🔑 Вход</div>
             <div class="login-tab" onclick="switchLoginTab('register')">📝 Регистрация</div>
         </div>
-
-        <!-- LOGIN FORM -->
         <div class="login-form active" id="loginForm">
             <div class="login-error" id="loginError"></div>
             <div class="login-field">
@@ -304,45 +288,23 @@ tr:hover td { background: var(--bg); }
             </div>
             <div class="login-field">
                 <label>Пин-код (4 цифры)</label>
-                <input type="password" id="loginPin" class="pin-input" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="••••" autocomplete="off">
+                <input type="password" id="loginPin" class="pin-input" maxlength="4" inputmode="numeric" placeholder="••••" autocomplete="off">
             </div>
             <button class="login-btn" onclick="doLogin()">Войти в систему</button>
-            <div class="login-hint">
-                💡 Администратор по умолчанию:<br>
-                <strong>Пин: 1408</strong>
-            </div>
         </div>
-
-        <!-- REGISTER FORM -->
         <div class="login-form" id="registerForm">
             <div class="login-error" id="registerError"></div>
-            <div class="login-field">
-                <label>ФИО *</label>
-                <input type="text" id="regFullName" placeholder="Иванов Иван Иванович">
-            </div>
-            <div class="login-field">
-                <label>Номер телефона *</label>
-                <input type="tel" id="regPhone" placeholder="+7 900 123-45-67">
-            </div>
-            <div class="login-field">
-                <label>Отдел *</label>
-                <select id="regDepartment"></select>
-            </div>
-            <div class="login-field">
-                <label>Пин-код для входа (4 цифры) *</label>
-                <input type="password" id="regPin" class="pin-input" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="••••" autocomplete="new-password">
-                <div class="form-hint">Запомните пин-код — он используется для входа в систему</div>
-            </div>
-            <div class="login-field">
-                <label>Подтвердите пин-код *</label>
-                <input type="password" id="regPinConfirm" class="pin-input" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="••••" autocomplete="new-password">
-            </div>
+            <div class="login-field"><label>ФИО *</label><input type="text" id="regFullName" placeholder="Иванов Иван Иванович"></div>
+            <div class="login-field"><label>Номер телефона *</label><input type="tel" id="regPhone" placeholder="+7 900 123-45-67"></div>
+            <div class="login-field"><label>Отдел *</label><select id="regDepartment"></select></div>
+            <div class="login-field"><label>Пин-код для входа (4 цифры) *</label><input type="password" id="regPin" class="pin-input" maxlength="4" inputmode="numeric" placeholder="••••" autocomplete="new-password"></div>
+            <div class="login-field"><label>Подтвердите пин-код *</label><input type="password" id="regPinConfirm" class="pin-input" maxlength="4" inputmode="numeric" placeholder="••••" autocomplete="new-password"></div>
             <button class="login-btn" onclick="doRegister()">Зарегистрироваться</button>
         </div>
     </div>
 </div>
 
-<!-- ============ MAIN APP ============ -->
+<!-- MAIN APP -->
 <aside class="sidebar" id="appSidebar" style="display:none">
     <div class="sidebar-header">
         <span class="logo-icon">🎪</span>
@@ -351,19 +313,20 @@ tr:hover td { background: var(--bg); }
     <div class="nav-section">
         <div class="nav-section-title">Рабочее пространство</div>
         <div class="nav-item active" data-page="tickets"><span class="nav-icon">📥</span><span>Заявки</span><span class="badge" id="navBadgeTickets">0</span></div>
+        <div class="nav-item admin-only" data-page="recurring"><span class="nav-icon">🔁</span><span>Повторяющиеся</span><span class="badge" id="navBadgeRecurring" style="background:#8b5cf6">0</span></div>
         <div class="nav-item" data-page="dashboard"><span class="nav-icon">📊</span><span>Дашборд</span></div>
     </div>
-    <div class="nav-section" id="navManagement">
+    <div class="nav-section">
         <div class="nav-section-title">Управление</div>
         <div class="nav-item" data-page="clients"><span class="nav-icon">👥</span><span>Заявители</span></div>
         <div class="nav-item" data-page="companies"><span class="nav-icon">🏢</span><span>Компании</span></div>
         <div class="nav-item" data-page="staff"><span class="nav-icon">🧑‍💼</span><span>Сотрудники</span></div>
     </div>
-    <div class="nav-section" id="navAnalytics">
+    <div class="nav-section">
         <div class="nav-section-title">Аналитика</div>
         <div class="nav-item" data-page="reports"><span class="nav-icon">📈</span><span>Отчёты</span></div>
     </div>
-    <div class="nav-section" id="navSystem">
+    <div class="nav-section">
         <div class="nav-section-title">Система</div>
         <div class="nav-item admin-only" data-page="departments"><span class="nav-icon">🏛</span><span>Отделы</span></div>
         <div class="nav-item admin-only" data-page="users"><span class="nav-icon">🔐</span><span>Пользователи</span></div>
@@ -380,7 +343,6 @@ tr:hover td { background: var(--bg); }
 </aside>
 
 <main class="main-content" id="appMain" style="display:none">
-    <!-- TICKETS -->
     <div class="page active" id="page-tickets">
         <div class="topbar">
             <div class="topbar-title">📥 Заявки</div>
@@ -395,26 +357,40 @@ tr:hover td { background: var(--bg); }
                     <div class="filter-tabs" id="filterTabs">
                         <div class="filter-tab active" data-filter="all">Все <span class="count" id="countAll">0</span></div>
                         <div class="filter-tab" data-filter="mine">Мои <span class="count" id="countMine">0</span></div>
-                        <div class="filter-tab" data-filter="unassigned">Неназначенные <span class="count" id="countUnassigned">0</span></div>
+                        <div class="filter-tab admin-only" data-filter="unassigned">Неназначенные <span class="count" id="countUnassigned">0</span></div>
                         <div class="filter-tab" data-filter="new">Новые <span class="count" id="countNew">0</span></div>
                         <div class="filter-tab" data-filter="open">В работе <span class="count" id="countOpen">0</span></div>
                         <div class="filter-tab" data-filter="pending">Ожидание <span class="count" id="countPending">0</span></div>
                         <div class="filter-tab" data-filter="solved">Решённые <span class="count" id="countSolved">0</span></div>
+                        <div class="filter-tab admin-only" data-filter="recurring">🔁 Повторяющиеся <span class="count" id="countRecurring">0</span></div>
                     </div>
                     <div class="filter-row">
                         <select id="filterPriority" onchange="renderTickets()"><option value="">Приоритет</option><option value="low">Низкий</option><option value="medium">Средний</option><option value="high">Высокий</option><option value="urgent">Срочный</option></select>
                         <select id="filterCategory" onchange="renderTickets()"><option value="">Категория</option></select>
                         <select id="filterAssignee" onchange="renderTickets()"><option value="">Исполнитель</option></select>
+                        <select id="filterDepartment" class="admin-only" onchange="renderTickets()"><option value="">Отдел</option></select>
                     </div>
                 </div>
                 <div class="tickets-list" id="ticketsList"></div>
             </div>
             <div class="tickets-detail-panel" id="ticketDetail">
-                <div class="ticket-detail-empty">
-                    <div class="empty-icon">📥</div>
-                    <h3>Выберите заявку</h3>
-                </div>
+                <div class="ticket-detail-empty"><div class="empty-icon">📥</div><h3>Выберите заявку</h3></div>
             </div>
+        </div>
+    </div>
+
+    <div class="page" id="page-recurring">
+        <div class="topbar">
+            <div class="topbar-title">🔁 Повторяющиеся заявки</div>
+            <div class="topbar-actions">
+                <button class="btn btn-primary" onclick="openTicketModal()">+ Создать шаблон</button>
+            </div>
+        </div>
+        <div class="page-content">
+            <div style="margin-bottom:15px;padding:12px;background:linear-gradient(135deg, #f5f3ff, #ede9fe);border-radius:8px;font-size:12px;color:#6b21a8;border-left:3px solid #8b5cf6">
+                🔁 <strong>Шаблоны повторяющихся заявок</strong> — автоматически создают новые экземпляры с заданной периодичностью.
+            </div>
+            <div id="recurringList"></div>
         </div>
     </div>
 
@@ -431,24 +407,17 @@ tr:hover td { background: var(--bg); }
     </div>
 
     <div class="page" id="page-staff">
-        <div class="topbar"><div class="topbar-title">🧑‍💼 Мои коллеги</div></div>
-        <div class="page-content"><div class="card"><table><thead><tr><th>Сотрудник</th><th>Телефон</th><th>Отдел</th><th>Роль</th><th>Открытых заявок</th><th>Решено</th></tr></thead><tbody id="staffTable"></tbody></table></div></div>
+        <div class="topbar"><div class="topbar-title">🧑‍💼 Сотрудники</div></div>
+        <div class="page-content"><div class="card"><table><thead><tr><th>Сотрудник</th><th>Телефон</th><th>Отдел</th><th>Роль</th><th>Открытых</th><th>Решено</th></tr></thead><tbody id="staffTable"></tbody></table></div></div>
     </div>
 
     <div class="page" id="page-reports"><div class="topbar"><div class="topbar-title">📈 Отчёты</div></div><div class="reports-content" id="reportsContent"></div></div>
 
-    <!-- ADMIN: DEPARTMENTS -->
     <div class="page" id="page-departments">
         <div class="topbar"><div class="topbar-title">🏛 Отделы</div><div class="topbar-actions"><button class="btn btn-primary" onclick="openDepartmentModal()">+ Отдел</button></div></div>
-        <div class="page-content">
-            <div style="margin-bottom:15px;padding:12px;background:var(--primary-light);border-radius:8px;font-size:12px;color:var(--primary-dark);border-left:3px solid var(--primary)">
-                🏛 Управление отделами. К каждому отделу можно привязать сотрудников.
-            </div>
-            <div id="departmentsList"></div>
-        </div>
+        <div class="page-content"><div id="departmentsList"></div></div>
     </div>
 
-    <!-- ADMIN: USERS -->
     <div class="page" id="page-users">
         <div class="topbar"><div class="topbar-title">🔐 Пользователи системы</div></div>
         <div class="page-content">
@@ -473,9 +442,7 @@ tr:hover td { background: var(--bg); }
     </div>
 </main>
 
-<!-- ============ MODALS ============ -->
-
-<!-- TICKET MODAL -->
+<!-- MODALS -->
 <div class="modal" id="ticketModal">
     <div class="modal-content large">
         <div class="modal-header"><div class="modal-title" id="ticketModalTitle">Новая заявка</div><button class="close-btn" onclick="closeModal('ticketModal')">&times;</button></div>
@@ -492,13 +459,45 @@ tr:hover td { background: var(--bg); }
                     <div class="form-group"><label>Исполнитель</label><select id="ticketAssignee"></select></div>
                 </div>
                 <div class="form-group"><label>Описание *</label><textarea id="ticketDescription" required></textarea></div>
+
+                <div class="recurrence-section">
+                    <div class="recurrence-header">
+                        <label>
+                            <input type="checkbox" id="recurrenceEnabled" onchange="toggleRecurrenceConfig()">
+                            🔁 Сделать повторяющейся заявкой
+                        </label>
+                    </div>
+                    <div class="recurrence-config" id="recurrenceConfig">
+                        <div class="form-hint" style="margin-bottom:10px;color:#6b21a8">Заявка будет автоматически создавать новые экземпляры</div>
+                        <div class="recurrence-presets">
+                            <button type="button" onclick="setRecurrencePreset('hourly', 1)">Каждый час</button>
+                            <button type="button" onclick="setRecurrencePreset('hourly', 4)">Каждые 4 часа</button>
+                            <button type="button" onclick="setRecurrencePreset('daily', 1)">Ежедневно</button>
+                            <button type="button" onclick="setRecurrencePreset('daily', 3)">Каждые 3 дня</button>
+                            <button type="button" onclick="setRecurrencePreset('weekly', 1)">Еженедельно</button>
+                            <button type="button" onclick="setRecurrencePreset('weekly', 2)">Каждые 2 недели</button>
+                            <button type="button" onclick="setRecurrencePreset('monthly', 1)">Ежемесячно</button>
+                        </div>
+                        <div class="recurrence-grid">
+                            <div class="form-group" style="margin-bottom:0"><label>Интервал</label><input type="number" id="recurrenceInterval" value="1" min="1" max="365"></div>
+                            <div class="form-group" style="margin-bottom:0"><label>Период</label><select id="recurrencePeriod"><option value="hourly">Часы</option><option value="daily" selected>Дни</option><option value="weekly">Недели</option><option value="monthly">Месяцы</option></select></div>
+                        </div>
+                        <div class="form-group" style="margin-top:10px;margin-bottom:0">
+                            <label>Первое выполнение</label>
+                            <input type="datetime-local" id="recurrenceFirstRun">
+                        </div>
+                        <div class="form-row" style="margin-top:10px">
+                            <div class="form-group" style="margin-bottom:0"><label>Окончание (необязательно)</label><input type="datetime-local" id="recurrenceEndDate"></div>
+                            <div class="form-group" style="margin-bottom:0"><label>Макс. кол-во (необязательно)</label><input type="number" id="recurrenceMaxCount" min="1" placeholder="∞"></div>
+                        </div>
+                    </div>
+                </div>
             </form>
         </div>
         <div class="modal-footer"><button class="btn" onclick="closeModal('ticketModal')">Отмена</button><button class="btn btn-primary" onclick="document.getElementById('ticketForm').requestSubmit()">Сохранить</button></div>
     </div>
 </div>
 
-<!-- POSTPONE MODAL -->
 <div class="modal" id="postponeModal">
     <div class="modal-content" style="max-width:480px">
         <div class="modal-header"><div class="modal-title">⏸ Отложить заявку</div><button class="close-btn" onclick="closeModal('postponeModal')">&times;</button></div>
@@ -520,7 +519,6 @@ tr:hover td { background: var(--bg); }
     </div>
 </div>
 
-<!-- CLIENT MODAL -->
 <div class="modal" id="clientModal">
     <div class="modal-content">
         <div class="modal-header"><div class="modal-title" id="clientModalTitle">Новый заявитель</div><button class="close-btn" onclick="closeModal('clientModal')">&times;</button></div>
@@ -539,7 +537,6 @@ tr:hover td { background: var(--bg); }
     </div>
 </div>
 
-<!-- COMPANY MODAL -->
 <div class="modal" id="companyModal">
     <div class="modal-content">
         <div class="modal-header"><div class="modal-title" id="companyModalTitle">Новая компания</div><button class="close-btn" onclick="closeModal('companyModal')">&times;</button></div>
@@ -554,14 +551,13 @@ tr:hover td { background: var(--bg); }
     </div>
 </div>
 
-<!-- DEPARTMENT MODAL -->
 <div class="modal" id="departmentModal">
     <div class="modal-content">
         <div class="modal-header"><div class="modal-title" id="departmentModalTitle">Новый отдел</div><button class="close-btn" onclick="closeModal('departmentModal')">&times;</button></div>
         <div class="modal-body">
             <form id="departmentForm" onsubmit="saveDepartment(event)">
                 <input type="hidden" id="departmentId">
-                <div class="form-group"><label>Название отдела *</label><input type="text" id="departmentName" required placeholder="Техническая поддержка"></div>
+                <div class="form-group"><label>Название отдела *</label><input type="text" id="departmentName" required></div>
                 <div class="form-group"><label>Описание</label><textarea id="departmentDescription"></textarea></div>
                 <div class="form-group"><label>Цвет</label><input type="color" id="departmentColor" value="#10b981" style="height:40px;cursor:pointer"></div>
             </form>
@@ -570,7 +566,6 @@ tr:hover td { background: var(--bg); }
     </div>
 </div>
 
-<!-- USER MODAL (admin edit) -->
 <div class="modal" id="userModal">
     <div class="modal-content">
         <div class="modal-header"><div class="modal-title" id="userModalTitle">Редактировать пользователя</div><button class="close-btn" onclick="closeModal('userModal')">&times;</button></div>
@@ -580,15 +575,8 @@ tr:hover td { background: var(--bg); }
                 <div class="form-group"><label>ФИО *</label><input type="text" id="userFullName" required></div>
                 <div class="form-group"><label>Телефон *</label><input type="tel" id="userPhone" required></div>
                 <div class="form-group"><label>Отдел</label><select id="userDepartment"></select></div>
-                <div class="form-group"><label>Роль</label>
-                    <select id="userRole">
-                        <option value="staff">Сотрудник</option>
-                        <option value="admin">Администратор</option>
-                    </select>
-                </div>
-                <div class="form-group"><label>Новый пин-код (4 цифры, оставьте пустым чтобы не менять)</label>
-                    <input type="password" id="userPin" class="pin-input" maxlength="4" inputmode="numeric" placeholder="••••" autocomplete="new-password">
-                </div>
+                <div class="form-group"><label>Роль</label><select id="userRole"><option value="staff">Сотрудник</option><option value="admin">Администратор</option></select></div>
+                <div class="form-group"><label>Новый пин-код (4 цифры)</label><input type="password" id="userPin" class="pin-input" maxlength="4" inputmode="numeric" placeholder="••••" autocomplete="new-password"></div>
             </form>
         </div>
         <div class="modal-footer"><button class="btn" onclick="closeModal('userModal')">Отмена</button><button class="btn btn-primary" onclick="document.getElementById('userForm').requestSubmit()">Сохранить</button></div>
@@ -619,19 +607,18 @@ let selectedLoginUserId = null;
 const STATUS_LABELS = { new: 'Новая', open: 'В работе', pending: 'Ожидание', solved: 'Решена', closed: 'Закрыта' };
 const PRIORITY_LABELS = { low: 'Низкий', medium: 'Средний', high: 'Высокий', urgent: 'Срочный' };
 const ROLE_LABELS = { admin: 'Администратор', staff: 'Сотрудник' };
+const PERIOD_FULL = { hourly: 'часов', daily: 'дней', weekly: 'недель', monthly: 'месяцев' };
 
 // ============ SEED ============
 function seedData() {
-    // Departments
     if (state.departments.length === 0) {
         state.departments = [
             { id: 'dep1', name: 'Техническая поддержка', description: 'Решение технических вопросов', color: '#10b981', createdAt: new Date().toISOString() },
-            { id: 'dep2', name: 'Отдел продаж', description: 'Работа с клиентами и продажами', color: '#3b82f6', createdAt: new Date().toISOString() },
+            { id: 'dep2', name: 'Отдел продаж', description: 'Работа с клиентами', color: '#3b82f6', createdAt: new Date().toISOString() },
             { id: 'dep3', name: 'Бухгалтерия', description: 'Финансовые вопросы', color: '#f59e0b', createdAt: new Date().toISOString() },
             { id: 'dep4', name: 'Отдел кадров', description: 'Работа с персоналом', color: '#8b5cf6', createdAt: new Date().toISOString() }
         ];
     }
-    // Users (admin + staff)
     if (state.users.length === 0) {
         state.users = [
             { id: 'user-admin', fullName: 'Администратор Системы', phone: '+7 900 000-00-00', pin: '1408', role: 'admin', departmentId: 'dep1', createdAt: new Date().toISOString() },
@@ -639,7 +626,6 @@ function seedData() {
             { id: 'user-3', fullName: 'Сидорова Анна Игоревна', phone: '+7 900 222-22-22', pin: '2222', role: 'staff', departmentId: 'dep2', createdAt: new Date().toISOString() }
         ];
     }
-    // Companies
     if (state.companies.length === 0) {
         state.companies = [
             { id: 'co1', name: 'Компания 1', domain: 'company1.ru', createdAt: new Date().toISOString() },
@@ -647,7 +633,6 @@ function seedData() {
             { id: 'co3', name: 'Компания 3', domain: 'company3.ru', createdAt: new Date().toISOString() }
         ];
     }
-    // Clients
     if (state.clients.length === 0) {
         state.clients = [
             { id: 'c1', name: 'Заявитель 1', email: 'a1@yarmarka.ru', phone: '+7 900 111-11-11', companyId: 'co1', createdAt: new Date().toISOString() },
@@ -655,7 +640,6 @@ function seedData() {
             { id: 'c3', name: 'Заявитель 3', email: 'a3@yarmarka.ru', phone: '+7 900 333-33-33', companyId: 'co3', createdAt: new Date().toISOString() }
         ];
     }
-    // Categories
     if (state.categories.length === 0) {
         state.categories = [
             { id: 'cat1', name: 'Тех. поддержка', color: '#10b981' },
@@ -665,14 +649,31 @@ function seedData() {
             { id: 'cat5', name: 'Другое', color: '#6b7280' }
         ];
     }
-    // Tickets
     if (state.tickets.length === 0) {
         const now = Date.now();
         state.tickets = [
-            { id: 't1', number: 'HD-1001', subject: 'Не работает оплата картой', description: 'Ошибка при оплате заказа.', clientId: 'c1', category: 'cat3', priority: 'high', status: 'open', assigneeId: 'user-admin', createdAt: new Date(now - 3600000*2).toISOString(), updatedAt: new Date(now - 3600000).toISOString(), resolvedAt: null, comments: [{ id: 'cm1', authorId: 'c1', authorType: 'client', text: 'Не могу оплатить заказ.', createdAt: new Date(now - 3600000*2).toISOString() }, { id: 'cm2', authorId: 'user-admin', authorType: 'agent', text: 'Проверю информацию.', createdAt: new Date(now - 3600000).toISOString() }], history: [] },
-            { id: 't2', number: 'HD-1002', subject: 'Вопрос по тарифу', description: 'Хотел бы узнать о тарифах.', clientId: 'c2', category: 'cat2', priority: 'medium', status: 'new', assigneeId: 'user-3', createdAt: new Date(now - 3600000).toISOString(), updatedAt: new Date(now - 3600000).toISOString(), resolvedAt: null, comments: [{ id: 'cm4', authorId: 'c2', authorType: 'client', text: 'Расскажите про тарифы.', createdAt: new Date(now - 3600000).toISOString() }], history: [] },
-            { id: 't3', number: 'HD-1003', subject: 'Возврат средств', description: 'Товар не соответствует.', clientId: 'c3', category: 'cat4', priority: 'urgent', status: 'pending', assigneeId: 'user-2', createdAt: new Date(now - 86400000).toISOString(), updatedAt: new Date(now - 3600000*5).toISOString(), dueAt: new Date(now + 86400000).toISOString(), resolvedAt: null, postponeReason: 'Ждём фото', comments: [{ id: 'cm5', authorId: 'c3', authorType: 'client', text: 'Товар повреждённый.', createdAt: new Date(now - 86400000).toISOString() }], history: [] },
-            { id: 't4', number: 'HD-1004', subject: 'Ошибка при входе', description: 'Не могу войти в ЛК.', clientId: 'c1', category: 'cat1', priority: 'medium', status: 'solved', assigneeId: 'user-2', createdAt: new Date(now - 86400000*2).toISOString(), updatedAt: new Date(now - 86400000).toISOString(), resolvedAt: new Date(now - 86400000).toISOString(), comments: [{ id: 'cm8', authorId: 'user-2', authorType: 'agent', text: 'Сбросил пароль.', createdAt: new Date(now - 86400000).toISOString() }], history: [] }
+            { id: 't1', number: 'HD-1001', subject: 'Не работает оплата картой', description: 'Ошибка при оплате заказа.', clientId: 'c1', category: 'cat3', priority: 'high', status: 'open', assigneeId: 'user-admin', createdAt: new Date(now - 3600000*2).toISOString(), updatedAt: new Date(now - 3600000).toISOString(), resolvedAt: null, recurrence: null, recurringParentId: null, comments: [{ id: 'cm1', authorId: 'c1', authorType: 'client', text: 'Не могу оплатить заказ.', createdAt: new Date(now - 3600000*2).toISOString() }, { id: 'cm2', authorId: 'user-admin', authorType: 'agent', text: 'Проверю информацию.', createdAt: new Date(now - 3600000).toISOString() }], history: [] },
+            { id: 't2', number: 'HD-1002', subject: 'Вопрос по тарифу', description: 'Хотел бы узнать о тарифах.', clientId: 'c2', category: 'cat2', priority: 'medium', status: 'new', assigneeId: 'user-3', createdAt: new Date(now - 3600000).toISOString(), updatedAt: new Date(now - 3600000).toISOString(), resolvedAt: null, recurrence: null, recurringParentId: null, comments: [{ id: 'cm4', authorId: 'c2', authorType: 'client', text: 'Расскажите про тарифы.', createdAt: new Date(now - 3600000).toISOString() }], history: [] },
+            { id: 't3', number: 'HD-1003', subject: 'Возврат средств', description: 'Товар не соответствует.', clientId: 'c3', category: 'cat4', priority: 'urgent', status: 'pending', assigneeId: 'user-2', createdAt: new Date(now - 86400000).toISOString(), updatedAt: new Date(now - 3600000*5).toISOString(), dueAt: new Date(now + 86400000).toISOString(), resolvedAt: null, postponeReason: 'Ждём фото', recurrence: null, recurringParentId: null, comments: [{ id: 'cm5', authorId: 'c3', authorType: 'client', text: 'Товар повреждённый.', createdAt: new Date(now - 86400000).toISOString() }], history: [] },
+            { id: 't4', number: 'HD-1004', subject: 'Ошибка при входе', description: 'Не могу войти в ЛК.', clientId: 'c1', category: 'cat1', priority: 'medium', status: 'solved', assigneeId: 'user-2', createdAt: new Date(now - 86400000*2).toISOString(), updatedAt: new Date(now - 86400000).toISOString(), resolvedAt: new Date(now - 86400000).toISOString(), recurrence: null, recurringParentId: null, comments: [{ id: 'cm8', authorId: 'user-2', authorType: 'agent', text: 'Сбросил пароль.', createdAt: new Date(now - 86400000).toISOString() }], history: [] },
+            {
+                id: 't-rec-1', number: 'HD-1005', subject: 'Еженедельная проверка серверов', description: 'Плановая проверка серверов.',
+                clientId: 'c1', category: 'cat1', priority: 'medium', status: 'open', assigneeId: 'user-2', tags: ['maintenance'],
+                createdAt: new Date(now - 86400000*7).toISOString(), updatedAt: new Date(now - 3600000).toISOString(),
+                resolvedAt: null, postponeReason: '', recurringParentId: null,
+                recurrence: {
+                    enabled: true, period: 'weekly', interval: 1,
+                    firstRunAt: new Date(now - 86400000*7).toISOString(),
+                    nextRunAt: new Date(now + 86400000*5).toISOString(),
+                    lastRunAt: new Date(now - 86400000*2).toISOString(),
+                    endDate: null, maxCount: null, currentCount: 3
+                },
+                comments: [
+                    { id: 'cm-rec-1', authorId: 'c1', authorType: 'client', text: 'Плановая проверка серверов.', createdAt: new Date(now - 86400000*7).toISOString() },
+                    { id: 'cm-rec-2', authorId: 'system', authorType: 'system', text: '🔁 Авто-экземпляр создан.', createdAt: new Date(now - 86400000*2).toISOString() }
+                ],
+                history: [{ action: 'created', at: new Date(now - 86400000*7).toISOString(), by: 'c1' }]
+            }
         ];
     }
     save();
@@ -733,6 +734,95 @@ document.querySelectorAll('.modal').forEach(m => {
     m.addEventListener('click', e => { if (e.target === m) m.classList.remove('active'); });
 });
 
+// ============ RECURRENCE ============
+function formatRecurrence(rec) {
+    if (!rec || !rec.enabled) return '';
+    const periodText = PERIOD_FULL[rec.period] || rec.period;
+    if (rec.interval === 1) {
+        if (rec.period === 'hourly') return 'Каждый час';
+        if (rec.period === 'daily') return 'Ежедневно';
+        if (rec.period === 'weekly') return 'Еженедельно';
+        if (rec.period === 'monthly') return 'Ежемесячно';
+    }
+    return `Каждые ${rec.interval} ${periodText}`;
+}
+
+function calculateNextRun(rec, fromDate) {
+    const from = new Date(fromDate || rec.lastRunAt || rec.firstRunAt || Date.now());
+    const next = new Date(from);
+    switch (rec.period) {
+        case 'hourly': next.setHours(next.getHours() + rec.interval); break;
+        case 'daily': next.setDate(next.getDate() + rec.interval); break;
+        case 'weekly': next.setDate(next.getDate() + rec.interval * 7); break;
+        case 'monthly': next.setMonth(next.getMonth() + rec.interval); break;
+    }
+    return next.toISOString();
+}
+
+function processRecurringTickets() {
+    const now = Date.now();
+    let createdCount = 0;
+    state.tickets.forEach(t => {
+        if (!t.recurrence || !t.recurrence.enabled) return;
+        if (!t.recurrence.nextRunAt) return;
+        if (new Date(t.recurrence.nextRunAt).getTime() > now) return;
+        if (t.recurrence.endDate && new Date(t.recurrence.endDate).getTime() < now) { t.recurrence.enabled = false; return; }
+        if (t.recurrence.maxCount && t.recurrence.currentCount >= t.recurrence.maxCount) { t.recurrence.enabled = false; return; }
+
+        const maxNum = state.tickets.reduce((m, x) => Math.max(m, parseInt(x.number.replace('HD-', ''))), 1000);
+        const newInstance = {
+            id: 't' + Date.now() + Math.random().toString(36).slice(2,6),
+            number: 'HD-' + (maxNum + 1),
+            subject: t.subject, description: t.description,
+            clientId: t.clientId, category: t.category,
+            priority: t.priority, assigneeId: t.assigneeId,
+            status: 'new', tags: [...(t.tags || [])],
+            createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+            resolvedAt: null, postponeReason: '',
+            recurringParentId: t.id, recurrence: null,
+            comments: [{
+                id: 'cm' + Date.now(), authorId: 'system', authorType: 'system',
+                text: `🔁 Автоматически создано из шаблона ${t.number}\nПериодичность: ${formatRecurrence(t.recurrence)}\nЭто экземпляр №${(t.recurrence.currentCount || 0) + 1}`,
+                createdAt: new Date().toISOString()
+            }],
+            history: [{ action: 'created', at: new Date().toISOString(), by: 'system', details: 'Авто-создание из повторяющегося шаблона' }]
+        };
+        state.tickets.push(newInstance);
+        t.recurrence.currentCount = (t.recurrence.currentCount || 0) + 1;
+        t.recurrence.lastRunAt = new Date().toISOString();
+        t.recurrence.nextRunAt = calculateNextRun(t.recurrence);
+        t.updatedAt = new Date().toISOString();
+        t.history = t.history || [];
+        t.history.push({ action: 'recurrence_fired', at: new Date().toISOString(), by: 'system', details: `Создан экземпляр ${newInstance.number}` });
+        t.comments.push({ id: 'cm' + Date.now() + 't', authorId: 'system', authorType: 'system', text: `🔁 Создан экземпляр: ${newInstance.number}\nСледующее: ${formatDateTime(t.recurrence.nextRunAt)}`, createdAt: new Date().toISOString() });
+        createdCount++;
+        toast(`🔁 Создан экземпляр ${newInstance.number}`);
+    });
+    if (createdCount > 0) {
+        save();
+        if (document.getElementById('page-tickets').classList.contains('active')) { renderTickets(); if (selectedTicketId) renderTicketDetail(); }
+        if (document.getElementById('page-recurring').classList.contains('active')) renderRecurring();
+    }
+}
+
+function toggleRecurrenceConfig() {
+    const enabled = document.getElementById('recurrenceEnabled').checked;
+    document.getElementById('recurrenceConfig').classList.toggle('active', enabled);
+    if (enabled && !document.getElementById('recurrenceFirstRun').value) {
+        const d = new Date(Date.now() + 3600000);
+        document.getElementById('recurrenceFirstRun').value = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    }
+}
+
+function setRecurrencePreset(period, interval) {
+    document.getElementById('recurrenceEnabled').checked = true;
+    document.getElementById('recurrencePeriod').value = period;
+    document.getElementById('recurrenceInterval').value = interval;
+    document.getElementById('recurrenceConfig').classList.add('active');
+    document.querySelectorAll('.recurrence-presets button').forEach(b => b.classList.remove('active'));
+    if (event && event.target) event.target.classList.add('active');
+}
+
 // ============ AUTH ============
 function checkAuth() {
     if (state.session && state.session.userId && getUser(state.session.userId)) {
@@ -763,7 +853,6 @@ function showApp() {
 
 function applyPermissions() {
     const admin = isAdmin();
-    // Скрываем админские разделы для обычных сотрудников
     document.querySelectorAll('.admin-only').forEach(el => {
         el.style.display = admin ? '' : 'none';
     });
@@ -793,19 +882,13 @@ function switchLoginTab(tab) {
     hideLoginError('registerError');
 }
 
-function showLoginError(id, msg) {
-    const el = document.getElementById(id);
-    el.textContent = msg;
-    el.classList.add('show');
-}
-function hideLoginError(id) {
-    document.getElementById(id).classList.remove('show');
-}
+function showLoginError(id, msg) { const el = document.getElementById(id); el.textContent = msg; el.classList.add('show'); }
+function hideLoginError(id) { document.getElementById(id).classList.remove('show'); }
 
 function renderUserPicker() {
     const picker = document.getElementById('userPicker');
     if (state.users.length === 0) {
-        picker.innerHTML = '<div style="padding:15px;text-align:center;color:var(--text-muted);font-size:12px">Нет зарегистрированных сотрудников. Зарегистрируйтесь первым!</div>';
+        picker.innerHTML = '<div style="padding:15px;text-align:center;color:var(--text-muted);font-size:12px">Нет зарегистрированных сотрудников</div>';
         return;
     }
     picker.innerHTML = state.users.map(u => {
@@ -837,7 +920,6 @@ function doLogin() {
     const user = getUser(selectedLoginUserId);
     if (!user) { showLoginError('loginError', 'Пользователь не найден'); return; }
     if (user.pin !== pin) { showLoginError('loginError', 'Неверный пин-код'); return; }
-
     CURRENT_USER_ID = user.id;
     state.session = { userId: user.id, loginAt: new Date().toISOString() };
     save();
@@ -852,32 +934,19 @@ function doRegister() {
     const departmentId = document.getElementById('regDepartment').value;
     const pin = document.getElementById('regPin').value;
     const pinConfirm = document.getElementById('regPinConfirm').value;
-
-    if (!fullName || fullName.split(' ').length < 2) { showLoginError('registerError', 'Введите ФИО полностью (минимум 2 слова)'); return; }
-    if (!phone || phone.length < 5) { showLoginError('registerError', 'Введите корректный номер телефона'); return; }
+    if (!fullName || fullName.split(' ').length < 2) { showLoginError('registerError', 'Введите ФИО полностью'); return; }
+    if (!phone || phone.length < 5) { showLoginError('registerError', 'Введите корректный телефон'); return; }
     if (!departmentId) { showLoginError('registerError', 'Выберите отдел'); return; }
     if (!/^\d{4}$/.test(pin)) { showLoginError('registerError', 'Пин-код должен содержать 4 цифры'); return; }
     if (pin !== pinConfirm) { showLoginError('registerError', 'Пин-коды не совпадают'); return; }
-
-    // Проверка уникальности телефона
-    if (state.users.some(u => u.phone === phone)) { showLoginError('registerError', 'Сотрудник с таким телефоном уже зарегистрирован'); return; }
-
-    const newUser = {
-        id: 'user-' + Date.now(),
-        fullName, phone, pin,
-        role: 'staff', // Новые пользователи — всегда сотрудники
-        departmentId,
-        createdAt: new Date().toISOString()
-    };
+    if (state.users.some(u => u.phone === phone)) { showLoginError('registerError', 'Телефон уже зарегистрирован'); return; }
+    const newUser = { id: 'user-' + Date.now(), fullName, phone, pin, role: 'staff', departmentId, createdAt: new Date().toISOString() };
     state.users.push(newUser);
     save();
-
-    // Автоматический вход
     CURRENT_USER_ID = newUser.id;
     state.session = { userId: newUser.id, loginAt: new Date().toISOString() };
     save();
-
-    toast('✅ Регистрация успешна! Добро пожаловать!');
+    toast('✅ Регистрация успешна!');
     showApp();
 }
 
@@ -893,18 +962,15 @@ function doLogout() {
 }
 
 function renderRegDepartments() {
-    const sel = document.getElementById('regDepartment');
-    sel.innerHTML = '<option value="">— Выберите отдел —</option>' + state.departments.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+    document.getElementById('regDepartment').innerHTML = '<option value="">— Выберите отдел —</option>' + state.departments.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
 }
 
-// Разрешаем ввод только цифр в пин-поля
 document.addEventListener('input', e => {
     if (e.target.classList && e.target.classList.contains('pin-input')) {
         e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
     }
 });
 
-// Enter для входа
 document.addEventListener('keydown', e => {
     if (e.key === 'Enter' && document.getElementById('loginScreen').style.display !== 'none') {
         if (document.getElementById('loginForm').classList.contains('active')) doLogin();
@@ -926,6 +992,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
         if (page === 'staff') renderStaff();
         if (page === 'reports') renderReports();
         if (page === 'tickets') renderTickets();
+        if (page === 'recurring') renderRecurring();
         if (page === 'departments') renderDepartments();
         if (page === 'users') renderUsers();
         if (page === 'settings') renderSettings();
@@ -944,7 +1011,24 @@ document.querySelectorAll('.filter-tab').forEach(tab => {
 
 function populateFilters() {
     document.getElementById('filterCategory').innerHTML = '<option value="">Категория</option>' + state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-    document.getElementById('filterAssignee').innerHTML = '<option value="">Исполнитель</option><option value="unassigned">Неназначенные</option>' + state.users.map(u => `<option value="${u.id}">${u.fullName}</option>`).join('');
+    // Исполнители — для админа все, для сотрудника только он сам
+    const assignees = isAdmin() ? state.users : state.users.filter(u => u.id === CURRENT_USER_ID);
+    document.getElementById('filterAssignee').innerHTML = '<option value="">Исполнитель</option><option value="unassigned">Неназначенные</option>' + assignees.map(u => `<option value="${u.id}">${u.fullName}</option>`).join('');
+    // Отделы — только для админа
+    if (isAdmin()) {
+        document.getElementById('filterDepartment').innerHTML = '<option value="">Все отделы</option>' + state.departments.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+    }
+}
+
+// ⭐ КЛЮЧЕВАЯ ФУНКЦИЯ: получение заявок с учётом прав доступа
+function getVisibleTickets() {
+    if (isAdmin()) {
+        // Администратор видит ВСЕ заявки
+        return state.tickets;
+    } else {
+        // Сотрудник видит ТОЛЬКО свои заявки (где он исполнитель)
+        return state.tickets.filter(t => t.assigneeId === CURRENT_USER_ID);
+    }
 }
 
 function filterTickets() {
@@ -952,13 +1036,24 @@ function filterTickets() {
     const priority = document.getElementById('filterPriority').value;
     const category = document.getElementById('filterCategory').value;
     const assignee = document.getElementById('filterAssignee').value;
+    const department = isAdmin() ? document.getElementById('filterDepartment').value : '';
 
-    let filtered = state.tickets.filter(t => {
+    // Базовый набор — с учётом прав доступа
+    let filtered = getVisibleTickets();
+
+    filtered = filtered.filter(t => {
         const client = getClient(t.clientId);
         const matchSearch = !search || t.subject.toLowerCase().includes(search) || t.number.toLowerCase().includes(search) || (client && client.name.toLowerCase().includes(search));
         const matchPriority = !priority || t.priority === priority;
         const matchCategory = !category || t.category === category;
         const matchAssignee = !assignee || (assignee === 'unassigned' ? !t.assigneeId : t.assigneeId === assignee);
+
+        // Фильтр по отделу (только для админа)
+        let matchDepartment = true;
+        if (department) {
+            const assigneeUser = getUser(t.assigneeId);
+            matchDepartment = assigneeUser && assigneeUser.departmentId === department;
+        }
 
         let matchFilter = true;
         if (currentFilter === 'mine') matchFilter = t.assigneeId === CURRENT_USER_ID;
@@ -967,21 +1062,26 @@ function filterTickets() {
         else if (currentFilter === 'open') matchFilter = t.status === 'open';
         else if (currentFilter === 'pending') matchFilter = t.status === 'pending';
         else if (currentFilter === 'solved') matchFilter = t.status === 'solved' || t.status === 'closed';
-        return matchSearch && matchPriority && matchCategory && matchAssignee && matchFilter;
+        else if (currentFilter === 'recurring') matchFilter = t.recurrence && t.recurrence.enabled;
+        return matchSearch && matchPriority && matchCategory && matchAssignee && matchDepartment && matchFilter;
     });
     filtered.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
     return filtered;
 }
 
 function updateCounts() {
-    document.getElementById('countAll').textContent = state.tickets.length;
-    document.getElementById('countMine').textContent = state.tickets.filter(t => t.assigneeId === CURRENT_USER_ID && !['solved','closed'].includes(t.status)).length;
-    document.getElementById('countUnassigned').textContent = state.tickets.filter(t => !t.assigneeId && !['solved','closed'].includes(t.status)).length;
-    document.getElementById('countNew').textContent = state.tickets.filter(t => t.status === 'new').length;
-    document.getElementById('countOpen').textContent = state.tickets.filter(t => t.status === 'open').length;
-    document.getElementById('countPending').textContent = state.tickets.filter(t => t.status === 'pending').length;
-    document.getElementById('countSolved').textContent = state.tickets.filter(t => t.status === 'solved' || t.status === 'closed').length;
-    document.getElementById('navBadgeTickets').textContent = state.tickets.filter(t => t.status === 'new' || t.status === 'open').length;
+    const visible = getVisibleTickets();
+    document.getElementById('countAll').textContent = visible.length;
+    document.getElementById('countMine').textContent = visible.filter(t => t.assigneeId === CURRENT_USER_ID && !['solved','closed'].includes(t.status)).length;
+    document.getElementById('countUnassigned').textContent = visible.filter(t => !t.assigneeId && !['solved','closed'].includes(t.status)).length;
+    document.getElementById('countNew').textContent = visible.filter(t => t.status === 'new').length;
+    document.getElementById('countOpen').textContent = visible.filter(t => t.status === 'open').length;
+    document.getElementById('countPending').textContent = visible.filter(t => t.status === 'pending').length;
+    document.getElementById('countSolved').textContent = visible.filter(t => t.status === 'solved' || t.status === 'closed').length;
+    const recurringCount = visible.filter(t => t.recurrence && t.recurrence.enabled).length;
+    document.getElementById('countRecurring').textContent = recurringCount;
+    document.getElementById('navBadgeRecurring').textContent = recurringCount;
+    document.getElementById('navBadgeTickets').textContent = visible.filter(t => t.status === 'new' || t.status === 'open').length;
 }
 
 function renderTickets() {
@@ -989,18 +1089,26 @@ function renderTickets() {
     populateFilters();
     const filtered = filterTickets();
     const list = document.getElementById('ticketsList');
-    if (filtered.length === 0) { list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>Нет заявок</p></div>'; return; }
+    if (filtered.length === 0) {
+        const msg = isAdmin() ? 'Нет заявок' : 'Нет назначенных вам заявок';
+        list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><p>${msg}</p></div>`;
+        return;
+    }
     list.innerHTML = filtered.map(t => {
         const client = getClient(t.clientId);
         const cat = getCategory(t.category);
+        const assignee = getUser(t.assigneeId);
+        const dep = assignee ? getDepartment(assignee.departmentId) : null;
         const lastComment = t.comments[t.comments.length - 1];
         const preview = lastComment ? lastComment.text : t.description;
+        const isRecurringTemplate = t.recurrence && t.recurrence.enabled;
+        const isRecurringInstance = t.recurringParentId;
         return `
-            <div class="ticket-item ${t.id === selectedTicketId ? 'active' : ''}" onclick="selectTicket('${t.id}')">
+            <div class="ticket-item ${t.id === selectedTicketId ? 'active' : ''} ${isRecurringTemplate ? 'is-recurring-template' : ''}" onclick="selectTicket('${t.id}')">
                 <div class="ticket-priority-bar priority-${t.priority}"></div>
                 <div class="ticket-content">
                     <div class="ticket-header">
-                        <span class="ticket-number">${t.number}</span>
+                        <span class="ticket-number">${isRecurringTemplate?'🔁 ':''}${isRecurringInstance?'📄 ':''}${t.number}</span>
                         <span class="ticket-time">${formatDate(t.updatedAt)}</span>
                     </div>
                     <div class="ticket-subject">${t.subject}</div>
@@ -1008,6 +1116,9 @@ function renderTickets() {
                     <div class="ticket-meta">
                         <span class="badge-status status-${t.status}">${STATUS_LABELS[t.status]}</span>
                         ${cat ? `<span style="font-size:10px;color:${cat.color}">● ${cat.name}</span>` : ''}
+                        ${isRecurringTemplate ? `<span class="recurring-indicator" title="${formatRecurrence(t.recurrence)}">🔁 ${formatRecurrence(t.recurrence)}</span>` : ''}
+                        ${isRecurringInstance ? `<span class="recurring-indicator" style="background:#f3e8ff;color:#6b21a8">📄 Экземпляр</span>` : ''}
+                        ${assignee ? `<span style="font-size:10px;color:var(--text-light)">🧑‍💼 ${assignee.fullName.split(' ')[0]}${dep ? ` <span class="dept-badge" style="background:${dep.color}22;color:${dep.color}">${dep.name}</span>` : ''}</span>` : '<span style="font-size:10px;color:var(--warning)">⚠ Не назначен</span>'}
                         ${client ? `<span style="font-size:10px;color:var(--text-light)">👤 ${client.name}</span>` : ''}
                     </div>
                 </div>
@@ -1017,6 +1128,13 @@ function renderTickets() {
 }
 
 function selectTicket(id) {
+    // Проверяем доступ
+    const t = state.tickets.find(x => x.id === id);
+    if (!t) return;
+    if (!isAdmin() && t.assigneeId !== CURRENT_USER_ID) {
+        toast('У вас нет доступа к этой заявке', 'error');
+        return;
+    }
     selectedTicketId = id;
     renderTickets();
     renderTicketDetail();
@@ -1026,24 +1144,67 @@ function renderTicketDetail() {
     const panel = document.getElementById('ticketDetail');
     const t = state.tickets.find(x => x.id === selectedTicketId);
     if (!t) { panel.innerHTML = `<div class="ticket-detail-empty"><div class="empty-icon">📥</div><h3>Выберите заявку</h3></div>`; return; }
+    // Проверка доступа
+    if (!isAdmin() && t.assigneeId !== CURRENT_USER_ID) {
+        panel.innerHTML = `<div class="ticket-detail-empty"><div class="empty-icon">🔒</div><h3>Нет доступа</h3><p style="margin-top:8px">Эта заявка назначена другому сотруднику</p></div>`;
+        return;
+    }
     const client = getClient(t.clientId);
     const assignee = getUser(t.assigneeId);
     const cat = getCategory(t.category);
     const company = client && client.companyId ? getCompany(client.companyId) : null;
     const isResolved = t.status === 'solved' || t.status === 'closed';
     const isPending = t.status === 'pending';
+    const isRecurringTemplate = t.recurrence && t.recurrence.enabled;
+    const isRecurringInstance = t.recurringParentId;
+    const parentTicket = isRecurringInstance ? state.tickets.find(x => x.id === t.recurringParentId) : null;
 
     let bannerHtml = '';
     if (isResolved) {
-        bannerHtml = `<div style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);color:#065f46;padding:12px 16px;border-radius:8px;margin-bottom:15px;display:flex;align-items:center;gap:12px"><span style="font-size:24px">✅</span><div style="flex:1"><div style="font-weight:600">Заявка решена</div><div style="font-size:11px;opacity:0.8">${t.resolvedAt ? formatDateTime(t.resolvedAt) : ''}</div></div><button class="btn btn-small" style="background:var(--info);color:white;border-color:var(--info)" onclick="reopenTicket('${t.id}')">🔓 Открыть заново</button></div>`;
+        bannerHtml = `<div class="resolved-banner"><div class="resolved-banner-icon">✅</div><div class="resolved-banner-info"><div class="resolved-banner-title">Заявка решена</div><div class="resolved-banner-sub">${t.resolvedAt ? formatDateTime(t.resolvedAt) : ''}</div></div><button class="btn btn-small btn-info" onclick="reopenTicket('${t.id}')">🔓 Открыть заново</button></div>`;
     } else if (isPending && t.dueAt) {
-        bannerHtml = `<div style="background:linear-gradient(135deg,#fef3c7,#fde68a);color:#92400e;padding:12px 16px;border-radius:8px;margin-bottom:15px;display:flex;align-items:center;gap:12px"><span style="font-size:24px">⏸️</span><div style="flex:1"><div style="font-weight:600">Отложена</div><div style="font-size:11px">Вернуться: <strong>${formatDateTime(t.dueAt)}</strong>${t.postponeReason ? ' • ' + t.postponeReason : ''}</div></div><button class="btn btn-small btn-resolve" onclick="resolveTicket('${t.id}')">✓ Решить</button><button class="btn btn-small btn-postpone" onclick="openPostponeModal('${t.id}')" style="color:white">⏸ Изменить</button></div>`;
+        bannerHtml = `<div class="postponed-banner"><div class="postponed-banner-icon">⏸️</div><div class="postponed-banner-info"><div class="resolved-banner-title">Отложена</div><div class="resolved-banner-sub">Вернуться: <strong>${formatDateTime(t.dueAt)}</strong>${t.postponeReason ? ' • ' + t.postponeReason : ''}</div></div><button class="btn btn-small btn-resolve" onclick="resolveTicket('${t.id}')" style="margin-right:5px">✓ Решить</button><button class="btn btn-small btn-postpone" onclick="openPostponeModal('${t.id}')" style="color:white">⏸ Изменить</button></div>`;
+    }
+
+    if (isRecurringTemplate) {
+        const rec = t.recurrence;
+        const limits = [];
+        if (rec.endDate) limits.push('до ' + formatDateTime(rec.endDate));
+        if (rec.maxCount) limits.push(`макс. ${rec.maxCount} шт`);
+        bannerHtml += `
+            <div class="recurring-banner">
+                <div class="recurring-banner-icon">🔁</div>
+                <div class="recurring-banner-info">
+                    <div class="recurring-banner-title">Повторяющаяся заявка (шаблон)</div>
+                    <div class="recurring-banner-sub">
+                        ${formatRecurrence(rec)} • Создано экземпляров: <strong>${rec.currentCount || 0}</strong>
+                        ${rec.nextRunAt ? ` • Следующее: <strong>${formatDateTime(rec.nextRunAt)}</strong>` : ''}
+                        ${limits.length ? ' • ' + limits.join(', ') : ''}
+                    </div>
+                </div>
+                <button class="btn btn-small" onclick="toggleRecurrence('${t.id}')" style="background:white;color:#6b21a8;border:1px solid #c4b5fd">${rec.enabled ? '⏸ Пауза' : '▶ Старт'}</button>
+            </div>
+        `;
+    }
+
+    if (isRecurringInstance && parentTicket) {
+        bannerHtml += `
+            <div class="recurring-instance-banner">
+                <span style="font-size:18px">📄</span>
+                <div style="flex:1">
+                    <div style="font-weight:600">Это экземпляр повторяющейся заявки</div>
+                    <div style="font-size:11px;opacity:0.9;margin-top:2px">
+                        Шаблон: <a href="#" onclick="event.preventDefault();selectTicket('${parentTicket.id}')" style="color:inherit;font-weight:600;text-decoration:underline">${parentTicket.number} — ${parentTicket.subject}</a>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     const messagesHtml = t.comments.map(c => {
         let authorName = '', cls = '';
-        if (c.authorType === 'client') { const cl = getClient(c.authorId); authorName = cl ? cl.name : 'Заявитель'; cls = 'message-client'; }
-        else if (c.authorType === 'system') { authorName = '🤖 Система'; cls = 'message-system'; }
+        if (c.authorType === 'system') { authorName = '🤖 Система'; cls = 'message-system'; }
+        else if (c.authorType === 'client') { const cl = getClient(c.authorId); authorName = cl ? cl.name : 'Заявитель'; cls = 'message-client'; }
         else { const u = getUser(c.authorId); authorName = u ? u.fullName : 'Исполнитель'; cls = 'message-agent'; }
         return `<div class="message ${cls}"><div class="message-header"><span class="message-author">${authorName}</span><span class="message-time">${formatDateTime(c.createdAt)}</span></div><div class="message-body">${c.text}</div></div>`;
     }).join('');
@@ -1056,6 +1217,8 @@ function renderTicketDetail() {
                     <span style="font-size:12px;color:var(--text-muted);font-family:monospace">${t.number}</span>
                     <span class="badge-status status-${t.status}">${STATUS_LABELS[t.status]}</span>
                     <span class="badge-priority" style="background:${t.priority==='urgent'?'#fee2e2':t.priority==='high'?'#fef3c7':t.priority==='medium'?'#d1fae5':'#f3f4f6'};color:${t.priority==='urgent'?'#991b1b':t.priority==='high'?'#92400e':t.priority==='medium'?'#065f46':'#374151'};padding:1px 7px;border-radius:8px;font-size:10px">${PRIORITY_LABELS[t.priority]}</span>
+                    ${isRecurringTemplate ? `<span class="recurring-indicator">🔁 Шаблон</span>` : ''}
+                    ${isRecurringInstance ? `<span class="recurring-indicator" style="background:#f3e8ff;color:#6b21a8">📄 Экземпляр</span>` : ''}
                 </div>
                 <div class="ticket-detail-title">${t.subject}</div>
                 <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--text-light);margin-top:10px">
@@ -1089,6 +1252,19 @@ function renderTicketDetail() {
                         <div class="info-row"><span class="info-row-label">Исполнитель</span><select onchange="updateTicketField('${t.id}','assigneeId',this.value)"><option value="">Не назначен</option>${state.users.map(u => `<option value="${u.id}" ${t.assigneeId===u.id?'selected':''}>${u.fullName}</option>`).join('')}</select></div>
                         <div class="info-row"><span class="info-row-label">Категория</span><select onchange="updateTicketField('${t.id}','category',this.value)">${state.categories.map(c => `<option value="${c.id}" ${t.category===c.id?'selected':''}>${c.name}</option>`).join('')}</select></div>
                     </div>
+                    ${isRecurringTemplate ? `
+                        <div class="info-card" style="background:linear-gradient(135deg, #f5f3ff, #ede9fe);border-color:#c4b5fd">
+                            <div class="info-card-title" style="color:#6b21a8">🔁 Повторение</div>
+                            <div style="font-size:12px;color:#6b21a8">
+                                <div style="margin-bottom:5px"><strong>${formatRecurrence(t.recurrence)}</strong></div>
+                                <div style="font-size:11px;opacity:0.8">
+                                    <div>Создано: ${t.recurrence.currentCount || 0} экз.</div>
+                                    ${t.recurrence.lastRunAt ? `<div>Последний: ${formatDateTime(t.recurrence.lastRunAt)}</div>` : ''}
+                                    ${t.recurrence.nextRunAt ? `<div>Следующий: ${formatDateTime(t.recurrence.nextRunAt)}</div>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
         </div>
@@ -1098,11 +1274,10 @@ function renderTicketDetail() {
 function resolveTicket(id) {
     const t = state.tickets.find(x => x.id === id);
     if (!t || t.status === 'solved' || t.status === 'closed') return;
-    const u = getCurrentUser();
     t.status = 'solved';
     t.resolvedAt = new Date().toISOString();
     t.updatedAt = new Date().toISOString();
-    t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: '✅ Заявка отмечена как решённая', createdAt: new Date().toISOString(), system: true });
+    t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: '✅ Заявка отмечена как решённая', createdAt: new Date().toISOString() });
     save();
     toast('✅ Заявка решена');
     renderTickets();
@@ -1115,7 +1290,7 @@ function reopenTicket(id) {
     t.status = 'open';
     t.resolvedAt = null;
     t.updatedAt = new Date().toISOString();
-    t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: '🔓 Заявка открыта заново', createdAt: new Date().toISOString(), system: true });
+    t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: '🔓 Заявка открыта заново', createdAt: new Date().toISOString() });
     save();
     toast('🔓 Заявка открыта заново');
     renderTickets();
@@ -1127,8 +1302,7 @@ function openPostponeModal(id) {
     if (!t) return;
     postponeTicketId = id;
     const tomorrow = new Date(Date.now() + 86400000);
-    const localISO = new Date(tomorrow.getTime() - tomorrow.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-    document.getElementById('postponeDate').value = t.dueAt ? t.dueAt.slice(0, 16) : localISO;
+    document.getElementById('postponeDate').value = t.dueAt ? t.dueAt.slice(0, 16) : new Date(tomorrow.getTime() - tomorrow.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
     document.getElementById('postponeReason').value = t.postponeReason || '';
     openModal('postponeModal');
 }
@@ -1149,7 +1323,7 @@ function confirmPostpone() {
     t.dueAt = dueDate.toISOString();
     t.postponeReason = reason;
     t.updatedAt = new Date().toISOString();
-    t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: `⏸ Заявка отложена до ${formatDateTime(dueDate.toISOString())}${reason ? '\nПричина: ' + reason : ''}`, createdAt: new Date().toISOString(), system: true });
+    t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: `⏸ Заявка отложена до ${formatDateTime(dueDate.toISOString())}${reason ? '\nПричина: ' + reason : ''}`, createdAt: new Date().toISOString() });
     save();
     closeModal('postponeModal');
     toast('⏸ Заявка отложена');
@@ -1186,42 +1360,95 @@ function updateTicketField(id, field, value) {
     renderTicketDetail();
 }
 
+function toggleRecurrence(id) {
+    const t = state.tickets.find(x => x.id === id);
+    if (!t || !t.recurrence) return;
+    t.recurrence.enabled = !t.recurrence.enabled;
+    if (t.recurrence.enabled && !t.recurrence.nextRunAt) t.recurrence.nextRunAt = calculateNextRun(t.recurrence);
+    t.updatedAt = new Date().toISOString();
+    save();
+    toast(t.recurrence.enabled ? '🔁 Повторение возобновлено' : '⏸ Повторение приостановлено');
+    renderTicketDetail();
+    renderTickets();
+    if (document.getElementById('page-recurring').classList.contains('active')) renderRecurring();
+}
+
 function openTicketModal() {
     document.getElementById('ticketForm').reset();
     document.getElementById('ticketId').value = '';
     document.getElementById('ticketModalTitle').textContent = 'Новая заявка';
+    document.getElementById('recurrenceEnabled').checked = false;
+    document.getElementById('recurrenceConfig').classList.remove('active');
+    document.getElementById('recurrenceInterval').value = 1;
+    document.getElementById('recurrencePeriod').value = 'daily';
+    document.getElementById('recurrenceFirstRun').value = '';
+    document.getElementById('recurrenceEndDate').value = '';
+    document.getElementById('recurrenceMaxCount').value = '';
+    document.querySelectorAll('.recurrence-presets button').forEach(b => b.classList.remove('active'));
     document.getElementById('ticketClient').innerHTML = '<option value="">Выберите</option>' + state.clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
     document.getElementById('ticketCategory').innerHTML = state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-    document.getElementById('ticketAssignee').innerHTML = '<option value="">Не назначен</option>' + state.users.map(u => `<option value="${u.id}">${u.fullName}</option>`).join('');
+    // При создании заявки: сотрудник видит только себя, админ — всех
+    const assignees = isAdmin() ? state.users : state.users.filter(u => u.id === CURRENT_USER_ID);
+    document.getElementById('ticketAssignee').innerHTML = '<option value="">Не назначен</option>' + assignees.map(u => `<option value="${u.id}" ${u.id === CURRENT_USER_ID ? 'selected' : ''}>${u.fullName}</option>`).join('');
     openModal('ticketModal');
 }
 
 function saveTicket(e) {
     e.preventDefault();
     const id = document.getElementById('ticketId').value;
+    let recurrence = null;
+    if (document.getElementById('recurrenceEnabled').checked) {
+        const period = document.getElementById('recurrencePeriod').value;
+        const interval = parseInt(document.getElementById('recurrenceInterval').value) || 1;
+        const firstRun = document.getElementById('recurrenceFirstRun').value;
+        const endDate = document.getElementById('recurrenceEndDate').value;
+        const maxCount = document.getElementById('recurrenceMaxCount').value;
+        if (!firstRun) { toast('Укажите дату первого выполнения', 'error'); return; }
+        const firstRunISO = new Date(firstRun).toISOString();
+        recurrence = {
+            enabled: true, period, interval,
+            firstRunAt: firstRunISO, nextRunAt: firstRunISO, lastRunAt: null,
+            endDate: endDate ? new Date(endDate).toISOString() : null,
+            maxCount: maxCount ? parseInt(maxCount) : null, currentCount: 0
+        };
+    }
+    let assigneeId = document.getElementById('ticketAssignee').value;
+    // Если сотрудник создаёт заявку без исполнителя — назначаем ему
+    if (!isAdmin() && !assigneeId) assigneeId = CURRENT_USER_ID;
+    // Сотрудник не может назначить заявку другому
+    if (!isAdmin() && assigneeId !== CURRENT_USER_ID) {
+        toast('Вы можете назначать заявки только себе', 'error');
+        return;
+    }
     const data = {
         subject: document.getElementById('ticketSubject').value,
         clientId: document.getElementById('ticketClient').value,
         category: document.getElementById('ticketCategory').value,
         priority: document.getElementById('ticketPriority').value,
-        assigneeId: document.getElementById('ticketAssignee').value,
+        assigneeId,
         description: document.getElementById('ticketDescription').value,
-        updatedAt: new Date().toISOString()
+        recurrence, updatedAt: new Date().toISOString()
     };
     if (id) {
-        Object.assign(state.tickets.find(x => x.id === id), data);
+        const t = state.tickets.find(x => x.id === id);
+        const oldRecurrence = t.recurrence;
+        Object.assign(t, data);
+        if (oldRecurrence && data.recurrence) {
+            t.recurrence.currentCount = oldRecurrence.currentCount || 0;
+            t.recurrence.lastRunAt = oldRecurrence.lastRunAt;
+        }
         toast('Заявка обновлена');
     } else {
         const maxNum = state.tickets.reduce((m, t) => Math.max(m, parseInt(t.number.replace('HD-', ''))), 1000);
         const newT = {
             id: 't' + Date.now(), number: 'HD-' + (maxNum + 1), ...data,
-            status: 'new', createdAt: new Date().toISOString(), resolvedAt: null,
+            status: 'new', createdAt: new Date().toISOString(), resolvedAt: null, recurringParentId: null,
             comments: [{ id: 'cm' + Date.now(), authorId: data.clientId, authorType: 'client', text: data.description, createdAt: new Date().toISOString() }],
             history: []
         };
         state.tickets.push(newT);
         selectedTicketId = newT.id;
-        toast('Заявка создана');
+        toast(data.recurrence ? '🔁 Повторяющаяся заявка создана' : 'Заявка создана');
     }
     save();
     closeModal('ticketModal');
@@ -1229,10 +1456,57 @@ function saveTicket(e) {
     renderTicketDetail();
 }
 
+// ============ RECURRING ============
+function renderRecurring() {
+    const list = document.getElementById('recurringList');
+    const templates = state.tickets.filter(t => t.recurrence);
+    if (templates.length === 0) {
+        list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔁</div><p>Нет повторяющихся заявок</p></div>';
+        return;
+    }
+    list.innerHTML = templates.map(t => {
+        const rec = t.recurrence;
+        const client = getClient(t.clientId);
+        const agent = getUser(t.assigneeId);
+        const dep = agent ? getDepartment(agent.departmentId) : null;
+        const instances = state.tickets.filter(x => x.recurringParentId === t.id).length;
+        return `
+            <div class="card" style="margin-bottom:12px;padding:15px;border-left:3px solid #8b5cf6">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px;flex-wrap:wrap">
+                    <div style="flex:1">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap">
+                            <span style="font-size:18px">🔁</span>
+                            <strong style="font-size:14px;color:var(--primary-dark)">${t.subject}</strong>
+                            <span class="badge-status status-${t.status}">${STATUS_LABELS[t.status]}</span>
+                            ${rec.enabled ? '<span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">АКТИВНО</span>' : '<span style="background:#e5e7eb;color:#374151;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">ПРИОСТАНОВЛЕНО</span>'}
+                        </div>
+                        <div style="font-size:11px;color:var(--text-light);display:flex;gap:12px;flex-wrap:wrap">
+                            <span>📋 ${t.number}</span>
+                            <span>👤 ${client ? client.name : '—'}</span>
+                            <span>🧑‍💼 ${agent ? agent.fullName : 'Не назначен'}</span>
+                            ${dep ? `<span class="dept-badge" style="background:${dep.color}22;color:${dep.color}">${dep.name}</span>` : ''}
+                            <span>🔁 <strong>${formatRecurrence(rec)}</strong></span>
+                            <span>📄 Экземпляров: <strong>${rec.currentCount || 0}</strong></span>
+                        </div>
+                        <div style="font-size:11px;color:var(--text-light);margin-top:5px">
+                            ${rec.lastRunAt ? `Последнее: ${formatDateTime(rec.lastRunAt)} • ` : ''}
+                            ${rec.nextRunAt ? `Следующее: <strong>${formatDateTime(rec.nextRunAt)}</strong>` : ''}
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:5px;align-items:center">
+                        <button class="btn btn-small" onclick="selectTicket('${t.id}');document.querySelector('[data-page=tickets]').click()">👁 Открыть</button>
+                        <button class="btn btn-small" onclick="toggleRecurrence('${t.id}')">${rec.enabled ? '⏸ Пауза' : '▶ Старт'}</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
 // ============ CLIENTS ============
 function renderClients() {
     const tbody = document.getElementById('clientsTable');
-    if (state.clients.length === 0) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">👥</div><p>Нет заявителей</p></div></td></tr>'; return; }
+    if (state.clients.length === 0) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><p>Нет заявителей</p></div></td></tr>'; return; }
     tbody.innerHTML = state.clients.map(c => {
         const ticketCount = state.tickets.filter(t => t.clientId === c.id).length;
         const company = c.companyId ? getCompany(c.companyId) : null;
@@ -1266,11 +1540,10 @@ function saveClient(e) {
     save();
     closeModal('clientModal');
     renderClients();
-    toast(id ? 'Обновлено' : 'Добавлено');
 }
 
 function deleteClient(id) {
-    if (!confirm('Удалить заявителя?')) return;
+    if (!confirm('Удалить?')) return;
     state.clients = state.clients.filter(c => c.id !== id);
     save();
     renderClients();
@@ -1279,7 +1552,7 @@ function deleteClient(id) {
 // ============ COMPANIES ============
 function renderCompanies() {
     const tbody = document.getElementById('companiesTable');
-    if (state.companies.length === 0) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><p>Нет компаний</p></div></td></tr>'; return; }
+    if (state.companies.length === 0) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><p>Нет компаний</p></div></td></tr>'; return; }
     tbody.innerHTML = state.companies.map(c => {
         const clientCount = state.clients.filter(cl => cl.companyId === c.id).length;
         const ticketCount = state.tickets.filter(t => { const cl = getClient(t.clientId); return cl && cl.companyId === c.id; }).length;
@@ -1320,24 +1593,25 @@ function deleteCompany(id) {
     renderCompanies();
 }
 
-// ============ STAFF (для обычных сотрудников — просмотр коллег) ============
+// ============ STAFF ============
 function renderStaff() {
     const tbody = document.getElementById('staffTable');
     tbody.innerHTML = state.users.map(u => {
         const dep = getDepartment(u.departmentId);
         const open = state.tickets.filter(t => t.assigneeId === u.id && !['solved','closed'].includes(t.status)).length;
         const solved = state.tickets.filter(t => t.assigneeId === u.id && (t.status === 'solved' || t.status === 'closed')).length;
-        return `<tr><td><span class="avatar-small">${getInitials(u.fullName)}</span>${u.fullName}${u.id === CURRENT_USER_ID ? ' <span style="font-size:10px;color:var(--primary);font-weight:600">← вы</span>' : ''}</td><td>${u.phone}</td><td>${dep ? `<span style="display:inline-block;padding:2px 8px;border-radius:10px;background:${dep.color}22;color:${dep.color};font-size:11px;font-weight:500">${dep.name}</span>` : '—'}</td><td><span class="role-badge role-${u.role}">${ROLE_LABELS[u.role]}</span></td><td><strong>${open}</strong></td><td><strong>${solved}</strong></td></tr>`;
+        return `<tr><td><span class="avatar-small">${getInitials(u.fullName)}</span>${u.fullName}${u.id === CURRENT_USER_ID ? ' <span style="font-size:10px;color:var(--primary);font-weight:600">← вы</span>' : ''}</td><td>${u.phone}</td><td>${dep ? `<span class="dept-badge" style="background:${dep.color}22;color:${dep.color}">${dep.name}</span>` : '—'}</td><td><span class="role-badge role-${u.role}">${ROLE_LABELS[u.role]}</span></td><td><strong>${open}</strong></td><td><strong>${solved}</strong></td></tr>`;
     }).join('');
 }
 
-// ============ DEPARTMENTS (admin) ============
+// ============ DEPARTMENTS ============
 function renderDepartments() {
     if (!isAdmin()) return;
     const list = document.getElementById('departmentsList');
     if (state.departments.length === 0) { list.innerHTML = '<div class="empty-state"><p>Нет отделов</p></div>'; return; }
     list.innerHTML = state.departments.map(d => {
         const members = state.users.filter(u => u.departmentId === d.id);
+        const ticketsCount = state.tickets.filter(t => { const u = getUser(t.assigneeId); return u && u.departmentId === d.id; }).length;
         return `
             <div class="card" style="margin-bottom:12px;padding:15px">
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
@@ -1345,7 +1619,7 @@ function renderDepartments() {
                         <div style="width:40px;height:40px;border-radius:10px;background:${d.color};display:flex;align-items:center;justify-content:center;color:white;font-size:18px">🏛</div>
                         <div>
                             <div style="font-weight:600;font-size:15px">${d.name}</div>
-                            <div style="font-size:12px;color:var(--text-light)">${d.description || 'Без описания'}</div>
+                            <div style="font-size:12px;color:var(--text-light)">${d.description || 'Без описания'} • 📥 ${ticketsCount} заявок</div>
                         </div>
                     </div>
                     <div style="display:flex;gap:5px">
@@ -1381,29 +1655,24 @@ function openDepartmentModal(id = null) {
 function saveDepartment(e) {
     e.preventDefault();
     const id = document.getElementById('departmentId').value;
-    const data = {
-        name: document.getElementById('departmentName').value,
-        description: document.getElementById('departmentDescription').value,
-        color: document.getElementById('departmentColor').value
-    };
+    const data = { name: document.getElementById('departmentName').value, description: document.getElementById('departmentDescription').value, color: document.getElementById('departmentColor').value };
     if (id) Object.assign(getDepartment(id), data);
     else state.departments.push({ id: 'dep' + Date.now(), ...data, createdAt: new Date().toISOString() });
     save();
     closeModal('departmentModal');
     renderDepartments();
-    toast(id ? 'Отдел обновлён' : 'Отдел создан');
 }
 
 function deleteDepartment(id) {
     if (!isAdmin()) return;
-    if (!confirm('Удалить отдел? Сотрудники останутся без отдела.')) return;
+    if (!confirm('Удалить отдел?')) return;
     state.departments = state.departments.filter(d => d.id !== id);
     state.users.forEach(u => { if (u.departmentId === id) u.departmentId = ''; });
     save();
     renderDepartments();
 }
 
-// ============ USERS (admin) ============
+// ============ USERS ============
 function renderUsers() {
     if (!isAdmin()) return;
     const tbody = document.getElementById('usersTable');
@@ -1413,7 +1682,7 @@ function renderUsers() {
             <tr>
                 <td><span class="avatar-small">${getInitials(u.fullName)}</span>${u.fullName}${u.id === CURRENT_USER_ID ? ' <span style="font-size:10px;color:var(--primary);font-weight:600">← вы</span>' : ''}</td>
                 <td>${u.phone}</td>
-                <td>${dep ? dep.name : '<span style="color:var(--text-muted)">—</span>'}</td>
+                <td>${dep ? `<span class="dept-badge" style="background:${dep.color}22;color:${dep.color}">${dep.name}</span>` : '—'}</td>
                 <td><span class="role-badge role-${u.role}">${ROLE_LABELS[u.role]}</span></td>
                 <td><span class="pin-display">${u.pin}</span></td>
                 <td style="font-size:11px;color:var(--text-light)">${formatDate(u.createdAt)}</td>
@@ -1462,36 +1731,44 @@ function saveUser(e) {
 function deleteUser(id) {
     if (!isAdmin()) return;
     if (id === CURRENT_USER_ID) { toast('Нельзя удалить себя', 'error'); return; }
-    if (!confirm('Удалить пользователя? Все его заявки останутся без исполнителя.')) return;
+    if (!confirm('Удалить пользователя?')) return;
     state.users = state.users.filter(u => u.id !== id);
     state.tickets.forEach(t => { if (t.assigneeId === id) t.assigneeId = ''; });
     save();
     renderUsers();
-    toast('Пользователь удалён');
 }
 
 // ============ DASHBOARD ============
 function renderDashboard() {
-    const total = state.tickets.length;
-    const open = state.tickets.filter(t => ['new','open','pending'].includes(t.status)).length;
-    const solved = state.tickets.filter(t => t.status === 'solved' || t.status === 'closed').length;
-    const myOpen = state.tickets.filter(t => t.assigneeId === CURRENT_USER_ID && !['solved','closed'].includes(t.status)).length;
-    const mySolved = state.tickets.filter(t => t.assigneeId === CURRENT_USER_ID && (t.status === 'solved' || t.status === 'closed')).length;
+    const visible = getVisibleTickets();
+    const total = visible.length;
+    const open = visible.filter(t => ['new','open','pending'].includes(t.status)).length;
+    const solved = visible.filter(t => t.status === 'solved' || t.status === 'closed').length;
+    const myOpen = visible.filter(t => t.assigneeId === CURRENT_USER_ID && !['solved','closed'].includes(t.status)).length;
+    const mySolved = visible.filter(t => t.assigneeId === CURRENT_USER_ID && (t.status === 'solved' || t.status === 'closed')).length;
+    const recurringCount = visible.filter(t => t.recurrence && t.recurrence.enabled).length;
+
+    const title = isAdmin() ? '📊 Общая статистика' : '📊 Моя статистика';
 
     document.getElementById('dashboardContent').innerHTML = `
+        <h2 style="margin-bottom:15px;color:var(--primary-dark)">${title}</h2>
         <div class="stats-grid">
             <div class="stat-card"><div class="stat-label">Всего заявок</div><div class="stat-value">${total}</div></div>
             <div class="stat-card"><div class="stat-label">Открытых</div><div class="stat-value" style="color:var(--warning)">${open}</div></div>
             <div class="stat-card"><div class="stat-label">Решённых</div><div class="stat-value" style="color:var(--success)">${solved}</div></div>
             <div class="stat-card"><div class="stat-label">Мои открытые</div><div class="stat-value">${myOpen}</div></div>
             <div class="stat-card"><div class="stat-label">Мои решённые</div><div class="stat-value" style="color:var(--success)">${mySolved}</div></div>
-            <div class="stat-card"><div class="stat-label">Сотрудников</div><div class="stat-value">${state.users.length}</div></div>
+            <div class="stat-card"><div class="stat-label">🔁 Повторяющихся</div><div class="stat-value" style="color:#8b5cf6">${recurringCount}</div></div>
         </div>
         <div class="report-card"><h3>📊 По статусам</h3><div class="bar-chart" id="dashChart1"></div></div>
-        <div class="report-card"><h3>👥 Загрузка сотрудников</h3><div class="bar-chart" id="dashChart2"></div></div>
+        ${isAdmin() ? `<div class="report-card"><h3>👥 Загрузка по сотрудникам</h3><div class="bar-chart" id="dashChart2"></div></div>
+        <div class="report-card"><h3>🏛 Загрузка по отделам</h3><div class="bar-chart" id="dashChart3"></div></div>` : ''}
     `;
-    renderBarChart('dashChart1', Object.entries(STATUS_LABELS).map(([k,v]) => ({ label: v, value: state.tickets.filter(t => t.status === k).length })));
-    renderBarChart('dashChart2', state.users.map(u => ({ label: u.fullName.split(' ')[0], value: state.tickets.filter(t => t.assigneeId === u.id && !['solved','closed'].includes(t.status)).length })));
+    renderBarChart('dashChart1', Object.entries(STATUS_LABELS).map(([k,v]) => ({ label: v, value: visible.filter(t => t.status === k).length })));
+    if (isAdmin()) {
+        renderBarChart('dashChart2', state.users.map(u => ({ label: u.fullName.split(' ')[0], value: visible.filter(t => t.assigneeId === u.id && !['solved','closed'].includes(t.status)).length })));
+        renderBarChart('dashChart3', state.departments.map(d => ({ label: d.name, value: visible.filter(t => { const u = getUser(t.assigneeId); return u && u.departmentId === d.id && !['solved','closed'].includes(t.status); }).length })));
+    }
 }
 
 function renderBarChart(id, data) {
@@ -1501,31 +1778,59 @@ function renderBarChart(id, data) {
 
 // ============ REPORTS ============
 function renderReports() {
-    const total = state.tickets.length;
-    const solved = state.tickets.filter(t => t.status === 'solved' || t.status === 'closed').length;
+    const visible = getVisibleTickets();
+    const total = visible.length;
+    const solved = visible.filter(t => t.status === 'solved' || t.status === 'closed').length;
     const rate = total ? Math.round((solved/total)*100) : 0;
+    const recurringCount = visible.filter(t => t.recurrence && t.recurrence.enabled).length;
+
     document.getElementById('reportsContent').innerHTML = `
         <div class="stats-grid">
             <div class="stat-card"><div class="stat-label">Всего</div><div class="stat-value">${total}</div></div>
             <div class="stat-card"><div class="stat-label">% решённых</div><div class="stat-value" style="color:var(--success)">${rate}%</div></div>
-            <div class="stat-card"><div class="stat-label">Сотрудников</div><div class="stat-value">${state.users.length}</div></div>
+            <div class="stat-card"><div class="stat-label">🔁 Повторяющихся</div><div class="stat-value" style="color:#8b5cf6">${recurringCount}</div></div>
             <div class="stat-card"><div class="stat-label">Отделов</div><div class="stat-value">${state.departments.length}</div></div>
         </div>
         <div class="report-card"><h3>📂 По категориям</h3><div class="bar-chart" id="rep1"></div></div>
         <div class="report-card"><h3>🎯 По приоритетам</h3><div class="bar-chart" id="rep2"></div></div>
-        <div class="report-card"><h3>👥 Производительность</h3>
+        ${isAdmin() ? `
+        <div class="report-card"><h3>👥 Производительность по сотрудникам</h3>
             <table style="width:100%"><thead><tr><th>Сотрудник</th><th>Отдел</th><th>Открытых</th><th>Решено</th></tr></thead><tbody>
                 ${state.users.map(u => {
                     const dep = getDepartment(u.departmentId);
-                    const open = state.tickets.filter(t => t.assigneeId === u.id && !['solved','closed'].includes(t.status)).length;
-                    const solved = state.tickets.filter(t => t.assigneeId === u.id && (t.status === 'solved' || t.status === 'closed')).length;
-                    return `<tr><td>${u.fullName}</td><td>${dep ? dep.name : '—'}</td><td>${open}</td><td>${solved}</td></tr>`;
+                    const open = visible.filter(t => t.assigneeId === u.id && !['solved','closed'].includes(t.status)).length;
+                    const solved = visible.filter(t => t.assigneeId === u.id && (t.status === 'solved' || t.status === 'closed')).length;
+                    return `<tr><td>${u.fullName}</td><td>${dep ? `<span class="dept-badge" style="background:${dep.color}22;color:${dep.color}">${dep.name}</span>` : '—'}</td><td>${open}</td><td>${solved}</td></tr>`;
                 }).join('')}
             </tbody></table>
         </div>
+        <div class="report-card"><h3>🏛 Производительность по отделам</h3>
+            <table style="width:100%"><thead><tr><th>Отдел</th><th>Сотрудников</th><th>Открытых</th><th>Решено</th></tr></thead><tbody>
+                ${state.departments.map(d => {
+                    const members = state.users.filter(u => u.departmentId === d.id);
+                    const open = visible.filter(t => { const u = getUser(t.assigneeId); return u && u.departmentId === d.id && !['solved','closed'].includes(t.status); }).length;
+                    const solved = visible.filter(t => { const u = getUser(t.assigneeId); return u && u.departmentId === d.id && (t.status === 'solved' || t.status === 'closed'); }).length;
+                    return `<tr><td><span class="dept-badge" style="background:${d.color}22;color:${d.color}">${d.name}</span></td><td>${members.length}</td><td>${open}</td><td>${solved}</td></tr>`;
+                }).join('')}
+            </tbody></table>
+        </div>
+        ` : `
+        <div class="report-card"><h3>📈 Моя производительность</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;padding:10px">
+                <div style="padding:15px;background:var(--bg);border-radius:8px;text-align:center">
+                    <div style="font-size:11px;color:var(--text-light);text-transform:uppercase;margin-bottom:5px">Открытых</div>
+                    <div style="font-size:28px;font-weight:700;color:var(--warning)">${visible.filter(t => t.assigneeId === CURRENT_USER_ID && !['solved','closed'].includes(t.status)).length}</div>
+                </div>
+                <div style="padding:15px;background:var(--bg);border-radius:8px;text-align:center">
+                    <div style="font-size:11px;color:var(--text-light);text-transform:uppercase;margin-bottom:5px">Решено</div>
+                    <div style="font-size:28px;font-weight:700;color:var(--success)">${visible.filter(t => t.assigneeId === CURRENT_USER_ID && (t.status === 'solved' || t.status === 'closed')).length}</div>
+                </div>
+            </div>
+        </div>
+        `}
     `;
-    renderBarChart('rep1', state.categories.map(c => ({ label: c.name, value: state.tickets.filter(t => t.category === c.id).length })));
-    renderBarChart('rep2', Object.entries(PRIORITY_LABELS).map(([k,v]) => ({ label: v, value: state.tickets.filter(t => t.priority === k).length })));
+    renderBarChart('rep1', state.categories.map(c => ({ label: c.name, value: visible.filter(t => t.category === c.id).length })));
+    renderBarChart('rep2', Object.entries(PRIORITY_LABELS).map(([k,v]) => ({ label: v, value: visible.filter(t => t.priority === k).length })));
 }
 
 // ============ SETTINGS ============
@@ -1557,8 +1862,7 @@ function renderSettings() {
                 </div>
                 <div class="form-group"><label>ФИО</label><input type="text" id="profileFullName" value="${u.fullName}"></div>
                 <div class="form-group"><label>Телефон</label><input type="tel" id="profilePhone" value="${u.phone}"></div>
-                ${isAdmin() ? '' : `<div class="form-group"><label>Отдел</label><div style="padding:8px;background:var(--bg);border-radius:5px;font-size:13px">${dep ? dep.name : '—'} <span style="font-size:11px;color:var(--text-muted)">(изменяет администратор)</span></div></div>`}
-                <div class="form-group"><label>Новый пин-код (4 цифры, оставьте пустым чтобы не менять)</label><input type="password" id="profilePin" class="pin-input" maxlength="4" inputmode="numeric" placeholder="••••"></div>
+                <div class="form-group"><label>Новый пин-код (4 цифры)</label><input type="password" id="profilePin" class="pin-input" maxlength="4" inputmode="numeric" placeholder="••••"></div>
                 <button class="btn btn-primary" onclick="saveProfile()">💾 Сохранить</button>
             </div>
         `;
@@ -1605,8 +1909,14 @@ seedData();
 if (state.settings.theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
 checkAuth();
 
+setInterval(() => {
+    if (CURRENT_USER_ID) processRecurringTickets();
+}, 30000);
+setTimeout(() => { if (CURRENT_USER_ID) processRecurringTickets(); }, 3000);
+
 console.log('%c🎪 Ярмарка CRM', 'color:#10b981;font-size:16px;font-weight:bold');
-console.log('%c🔐 Администратор: пин 1408', 'color:#f59e0b;font-size:12px');
+console.log('%c👥 Сотрудники видят только свои заявки', 'color:#3b82f6;font-size:12px');
+console.log('%c👑 Администратор видит все заявки + сортировка по отделам', 'color:#f59e0b;font-size:12px');
 </script>
 </body>
 </html>
