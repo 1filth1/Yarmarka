@@ -822,7 +822,31 @@ function openPostponeModal(id) {
 }
 
 function setPostponePreset(hours) { const d = new Date(Date.now() + hours * 3600000); document.getElementById('postponeDate').value = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); }
-function confirmPostpone() { const dateValue = document.getElementById('postponeDate').value; if (!dateValue) { toast('Укажите дату', 'error'); return; } const t = state.tickets.find(x => x.id === postponeTicketId); if (!t) return; const reason = document.getElementById('postponeReason').value.trim(); const dueDate = new Date(dateValue); const currentUser = getCurrentUser(); t.status = 'pending'; t.dueAt = dueDate.toISOString(); t.postponeReason = reason; t.updatedAt = new Date().toISOString(); t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: `⏸ Заявка отложена до ${formatDateTime(dueDate.toISOString())}${reason ? '\nПричина: ' + reason : ''}`, createdAt: new Date().toISOString() }); t.history = t.history || []; t.history.push({ action: 'postponed', at: new Date().toISOString(), by: CURRENT_USER_ID, details: currentUser ? currentUser.fullName : 'Неизвестно' }); save(); closeModal('postponeModal'); toast('⏸ Заявка отложена'); renderTickets(); if (document.getElementById('ticketViewModal').classList.contains('active')) refreshTicketModal(); }
+
+function confirmPostpone() { 
+    const dateValue = document.getElementById('postponeDate').value; 
+    if (!dateValue) { toast('Укажите дату', 'error'); return; } 
+    const t = state.tickets.find(x => x.id === postponeTicketId); 
+    if (!t) return; 
+    const reason = document.getElementById('postponeReason').value.trim(); 
+    const dueDate = new Date(dateValue); 
+    const currentUser = getCurrentUser(); 
+    t.status = 'pending'; 
+    t.dueAt = dueDate.toISOString(); 
+    t.postponeReason = reason; 
+    t.updatedAt = new Date().toISOString(); 
+    t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: `⏸ Заявка отложена до ${formatDateTime(dueDate.toISOString())}${reason ? '\nПричина: ' + reason : ''}`, createdAt: new Date().toISOString() }); 
+    t.history = t.history || []; 
+    t.history.push({ action: 'postponed', at: new Date().toISOString(), by: CURRENT_USER_ID, details: currentUser ? currentUser.fullName : 'Неизвестно' }); 
+    save(); 
+    closeModal('postponeModal'); 
+    toast('⏸ Заявка отложена'); 
+    renderTickets(); 
+    // ✅ Закрываем модалку заявки после отложения
+    if (document.getElementById('ticketViewModal').classList.contains('active')) {
+        closeTicketModal();
+    }
+}
 
 function updateTicketField(id, field, value) { 
     const t = state.tickets.find(x => x.id === id); 
@@ -882,7 +906,6 @@ function openTicketModal() {
     document.querySelectorAll('.recurrence-presets button').forEach(b => b.classList.remove('active')); 
     document.getElementById('ticketClient').innerHTML = '<option value="">Выберите</option>' + state.clients.map(c => `<option value="${c.id}">${c.name}</option>`).join(''); 
     document.getElementById('ticketCategory').innerHTML = state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join(''); 
-    // ✅ Все пользователи могут выбирать любого исполнителя
     const currentUser = getCurrentUser();
     document.getElementById('ticketAssignee').innerHTML = '<option value="">Не назначен</option>' + state.users.map(u => `<option value="${u.id}" ${u.id === (currentUser ? currentUser.id : '') ? 'selected' : ''}>${u.fullName}</option>`).join(''); 
     openModal('ticketModal'); 
