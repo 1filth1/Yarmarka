@@ -1035,7 +1035,9 @@ function importData(event) {
 
 document.getElementById('ticketViewModal').addEventListener('click', function(e) { if (e.target === this) closeTicketModal(); });
 
-// ✅ ПОЛНЫЙ СПИСОК ЭКСПОРТА ВСЕХ ФУНКЦИЙ
+// ✅ ПОЛНЫЙ ЭКСПОРТ ВСЕХ ФУНКЦИЙ В WINDOW
+// Вставьте этот блок ПЕРЕД вызовом initApp()
+
 window.switchLoginTab = switchLoginTab;
 window.selectLoginUser = selectLoginUser;
 window.doLogin = doLogin;
@@ -1059,6 +1061,11 @@ window.saveTicket = saveTicket;
 window.toggleRecurrenceConfig = toggleRecurrenceConfig;
 window.setRecurrencePreset = setRecurrencePreset;
 window.selectTicket = selectTicket;
+window.selectStatusFilter = selectStatusFilter;
+window.renderStatusCards = renderStatusCards;
+window.populateFilters = populateFilters;
+window.filterTickets = filterTickets;
+window.getVisibleTickets = getVisibleTickets;
 window.openClientModal = openClientModal;
 window.saveClient = saveClient;
 window.deleteClient = deleteClient;
@@ -1078,7 +1085,6 @@ window.deleteCategory = deleteCategory;
 window.resetDemoData = resetDemoData;
 window.exportData = exportData;
 window.importData = importData;
-window.selectStatusFilter = selectStatusFilter;
 window.renderTickets = renderTickets;
 window.renderDashboard = renderDashboard;
 window.renderClients = renderClients;
@@ -1089,6 +1095,7 @@ window.renderDepartments = renderDepartments;
 window.renderUsers = renderUsers;
 window.renderSettings = renderSettings;
 window.renderRecurring = renderRecurring;
+window.renderBarChart = renderBarChart;
 
 async function initApp() {
   console.log('🚀 Инициализация приложения...');
