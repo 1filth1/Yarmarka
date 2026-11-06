@@ -42,10 +42,17 @@
 
     if (docSnap.exists()) {
       const data = docSnap.data();
-      state.users = data.users || []; state.departments = data.departments || [];
-      state.clients = data.clients || []; state.companies = data.companies || [];
-      state.tickets = data.tickets || []; state.categories = data.categories || [];
-      state.settings = data.settings || { theme: 'light', companyName: 'Ярмарка CRM' };
+      if (data.users && data.users.length > 0) {
+        state.users = data.users;
+      } else {
+        state.users = JSON.parse(localStorage.getItem('hd_users')) || [];
+      }
+      state.departments = data.departments || JSON.parse(localStorage.getItem('hd_departments')) || [];
+      state.clients = data.clients || JSON.parse(localStorage.getItem('hd_clients')) || [];
+      state.companies = data.companies || JSON.parse(localStorage.getItem('hd_companies')) || [];
+      state.tickets = data.tickets || JSON.parse(localStorage.getItem('hd_tickets')) || [];
+      state.categories = data.categories || JSON.parse(localStorage.getItem('hd_categories')) || [];
+      state.settings = data.settings || JSON.parse(localStorage.getItem('hd_settings')) || { theme: 'light', companyName: 'Ярмарка CRM' };
     } else {
       seedData();
       await window.saveToFirebase();
@@ -55,16 +62,14 @@
       if (doc.exists() && !isSaving) {
         const newData = doc.data();
         const updateTimestamp = newData.updatedAt ? new Date(newData.updatedAt).getTime() : 0;
-        
         if (updateTimestamp > lastSavedAt) {
-          state.users = newData.users || state.users;
-          state.departments = newData.departments || state.departments;
-          state.clients = newData.clients || state.clients;
-          state.companies = newData.companies || state.companies;
-          state.tickets = newData.tickets || state.tickets;
-          state.categories = newData.categories || state.categories;
-          state.settings = newData.settings || state.settings;
-          
+          if (newData.users) state.users = newData.users;
+          if (newData.departments) state.departments = newData.departments;
+          if (newData.clients) state.clients = newData.clients;
+          if (newData.companies) state.companies = newData.companies;
+          if (newData.tickets) state.tickets = newData.tickets;
+          if (newData.categories) state.categories = newData.categories;
+          if (newData.settings) state.settings = newData.settings;
           if (document.getElementById('page-tickets')?.classList.contains('active')) renderTickets();
           if (document.getElementById('page-recurring')?.classList.contains('active')) renderRecurring();
           if (document.getElementById('page-dashboard')?.classList.contains('active')) renderDashboard();
@@ -501,12 +506,52 @@ function switchLoginTab(tab) { document.querySelectorAll('.login-tab').forEach(t
 function showLoginError(id, msg) { const el = document.getElementById(id); el.textContent = msg; el.classList.add('show'); }
 function hideLoginError(id) { document.getElementById(id).classList.remove('show'); }
 
-function renderUserPicker() { const picker = document.getElementById('userPicker'); if (state.users.length === 0) { picker.innerHTML = '<div style="padding:15px;text-align:center;color:var(--text-muted);font-size:12px">Нет зарегистрированных сотрудников</div>'; return; } picker.innerHTML = state.users.map(u => { const dep = getDepartment(u.departmentId); return `<div class="user-pick-item ${selectedLoginUserId === u.id ? 'selected' : ''}" onclick="selectLoginUser('${u.id}')"><div class="user-pick-avatar">${getInitials(u.fullName)}</div><div class="user-pick-info"><div class="user-pick-name">${u.fullName}</div><div class="user-pick-role">${dep ? dep.name : 'Без отдела'} • ${ROLE_LABELS[u.role]}</div></div>${u.role === 'admin' ? '<span class="user-pick-badge">ADMIN</span>' : ''}</div>`; }).join(''); }
+function renderUserPicker() { 
+    const picker = document.getElementById('userPicker'); 
+    console.log('📋 Пользователи в системе:', state.users.map(u => u.fullName));
+    if (state.users.length === 0) { picker.innerHTML = '<div style="padding:15px;text-align:center;color:var(--text-muted);font-size:12px">Нет зарегистрированных сотрудников</div>'; return; } 
+    picker.innerHTML = state.users.map(u => { 
+        const dep = getDepartment(u.departmentId); 
+        return `<div class="user-pick-item ${selectedLoginUserId === u.id ? 'selected' : ''}" onclick="selectLoginUser('${u.id}')"><div class="user-pick-avatar">${getInitials(u.fullName)}</div><div class="user-pick-info"><div class="user-pick-name">${u.fullName}</div><div class="user-pick-role">${dep ? dep.name : 'Без отдела'} • ${ROLE_LABELS[u.role]}</div></div>${u.role === 'admin' ? '<span class="user-pick-badge">ADMIN</span>' : ''}</div>`; 
+    }).join(''); 
+}
 function selectLoginUser(id) { selectedLoginUserId = id; renderUserPicker(); document.getElementById('loginPin').focus(); }
 
 function doLogin() { hideLoginError('loginError'); if (!selectedLoginUserId) { showLoginError('loginError', 'Выберите сотрудника'); return; } const pin = document.getElementById('loginPin').value; if (!/^\d{4}$/.test(pin)) { showLoginError('loginError', 'Пин-код должен содержать 4 цифры'); return; } const user = getUser(selectedLoginUserId); if (!user) { showLoginError('loginError', 'Пользователь не найден'); return; } if (user.pin !== pin) { showLoginError('loginError', 'Неверный пин-код'); return; } CURRENT_USER_ID = user.id; state.session = { userId: user.id, loginAt: new Date().toISOString() }; save(); toast('👋 Добро пожаловать, ' + user.fullName.split(' ')[0] + '!'); showApp(); }
 
-function doRegister() { hideLoginError('registerError'); const fullName = document.getElementById('regFullName').value.trim(); const phone = document.getElementById('regPhone').value.trim(); const departmentId = document.getElementById('regDepartment').value; const pin = document.getElementById('regPin').value; const pinConfirm = document.getElementById('regPinConfirm').value; if (!fullName || fullName.split(' ').length < 2) { showLoginError('registerError', 'Введите ФИО полностью'); return; } if (!phone || phone.length < 5) { showLoginError('registerError', 'Введите корректный телефон'); return; } if (!departmentId) { showLoginError('registerError', 'Выберите отдел'); return; } if (!/^\d{4}$/.test(pin)) { showLoginError('registerError', 'Пин-код должен содержать 4 цифры'); return; } if (pin !== pinConfirm) { showLoginError('registerError', 'Пин-коды не совпадают'); return; } if (state.users.some(u => u.phone === phone)) { showLoginError('registerError', 'Телефон уже зарегистрирован'); return; } const newUser = { id: 'user-' + Date.now(), fullName, phone, pin, role: 'staff', departmentId, createdAt: new Date().toISOString() }; state.users.push(newUser); CURRENT_USER_ID = newUser.id; state.session = { userId: newUser.id, loginAt: new Date().toISOString() }; save().then(() => { toast('✅ Регистрация успешна! Добро пожаловать, ' + fullName.split(' ')[0] + '!'); showApp(); }); }
+function doRegister() { 
+    hideLoginError('registerError'); 
+    const fullName = document.getElementById('regFullName').value.trim(); 
+    const phone = document.getElementById('regPhone').value.trim(); 
+    const departmentId = document.getElementById('regDepartment').value; 
+    const pin = document.getElementById('regPin').value; 
+    const pinConfirm = document.getElementById('regPinConfirm').value; 
+    if (!fullName || fullName.split(' ').length < 2) { showLoginError('registerError', 'Введите ФИО полностью'); return; } 
+    if (!phone || phone.length < 5) { showLoginError('registerError', 'Введите корректный телефон'); return; } 
+    if (!departmentId) { showLoginError('registerError', 'Выберите отдел'); return; } 
+    if (!/^\d{4}$/.test(pin)) { showLoginError('registerError', 'Пин-код должен содержать 4 цифры'); return; } 
+    if (pin !== pinConfirm) { showLoginError('registerError', 'Пин-коды не совпадают'); return; } 
+    if (state.users.some(u => u.phone === phone)) { showLoginError('registerError', 'Телефон уже зарегистрирован'); return; } 
+    const newUser = { id: 'user-' + Date.now(), fullName, phone, pin, role: 'staff', departmentId, createdAt: new Date().toISOString() }; 
+    state.users.push(newUser);
+    CURRENT_USER_ID = newUser.id;
+    state.session = { userId: newUser.id, loginAt: new Date().toISOString() };
+    localStorage.setItem('hd_users', JSON.stringify(state.users));
+    localStorage.setItem('hd_session', JSON.stringify(state.session));
+    if (typeof window.saveToFirebase === 'function') {
+        window.saveToFirebase().then(() => {
+            toast('✅ Регистрация успешна! Добро пожаловать, ' + fullName.split(' ')[0] + '!');
+            showApp();
+        }).catch(err => {
+            console.error('Ошибка Firebase:', err);
+            toast('⚠️ Регистрация успешна, но данные не сохранены в облаке');
+            showApp();
+        });
+    } else {
+        toast('✅ Регистрация успешна! Добро пожаловать, ' + fullName.split(' ')[0] + '!');
+        showApp();
+    }
+}
 
 function doLogout() { if (!confirm('Выйти из системы?')) return; state.session = null; CURRENT_USER_ID = null; selectedLoginUserId = null; selectedTicketId = null; save(); document.getElementById('loginPin').value = ''; showLogin(); }
 function renderRegDepartments() { document.getElementById('regDepartment').innerHTML = '<option value="">— Выберите отдел —</option>' + state.departments.map(d => `<option value="${d.id}">${d.name}</option>`).join(''); }
@@ -568,13 +613,7 @@ function updateCounts() { const visible = getVisibleTickets(); document.getEleme
 
 function renderTickets() { updateCounts(); populateFilters(); const filtered = filterTickets(); const list = document.getElementById('ticketsList'); if (filtered.length === 0) { const msg = isAdmin() ? 'Нет заявок' : 'Нет назначенных вам заявок'; list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><p>${msg}</p></div>`; return; } list.innerHTML = filtered.map(t => { const client = getClient(t.clientId); const cat = getCategory(t.category); const assignee = getUser(t.assigneeId); const dep = assignee ? getDepartment(assignee.departmentId) : null; const lastComment = t.comments[t.comments.length - 1]; const preview = lastComment ? lastComment.text : t.description; const isRecurringTemplate = t.recurrence && t.recurrence.enabled; const isRecurringInstance = t.recurringParentId; return `<div class="ticket-item ${isRecurringTemplate ? 'is-recurring-template' : ''}" onclick="selectTicket('${t.id}')"><div class="ticket-priority-bar priority-${t.priority}"></div><div class="ticket-content"><div class="ticket-header"><span class="ticket-number">${isRecurringTemplate?'🔁 ':''}${isRecurringInstance?'📄 ':''}${t.number}</span><span class="ticket-time">${formatDate(t.updatedAt)}</span></div><div class="ticket-subject">${t.subject}</div><div class="ticket-preview">${preview}</div><div class="ticket-meta"><span class="badge-status status-${t.status}">${STATUS_LABELS[t.status]}</span>${cat ? `<span style="font-size:10px;color:${cat.color}">● ${cat.name}</span>` : ''}${isRecurringTemplate ? `<span class="recurring-indicator">🔁 ${formatRecurrence(t.recurrence)}</span>` : ''}${isRecurringInstance ? `<span class="recurring-indicator" style="background:#f3e8ff;color:#6b21a8">📄 Экземпляр</span>` : ''}${assignee ? `<span style="font-size:10px;color:var(--text-light)">🧑‍💼 ${assignee.fullName.split(' ')[0]}${dep ? ` <span class="dept-badge" style="background:${dep.color}22;color:${dep.color}">${dep.name}</span>` : ''}</span>` : '<span style="font-size:10px;color:var(--warning)">⚠ Не назначен</span>'}${client ? `<span style="font-size:10px;color:var(--text-light)">👤 ${client.name}</span>` : ''}</div></div></div>`; }).join(''); }
 
-function selectTicket(id) {
-    const t = state.tickets.find(x => x.id === id);
-    if (!t) return;
-    if (!isAdmin() && t.assigneeId !== CURRENT_USER_ID) { toast('У вас нет доступа к этой заявке', 'error'); return; }
-    selectedTicketId = id;
-    openTicketViewModal(t);
-}
+function selectTicket(id) { const t = state.tickets.find(x => x.id === id); if (!t) return; if (!isAdmin() && t.assigneeId !== CURRENT_USER_ID) { toast('У вас нет доступа к этой заявке', 'error'); return; } selectedTicketId = id; openTicketViewModal(t); }
 
 function openTicketViewModal(t) {
     const client = getClient(t.clientId);
@@ -684,17 +723,8 @@ function openTicketViewModal(t) {
     openModal('ticketViewModal');
 }
 
-function closeTicketModal() {
-    closeModal('ticketViewModal');
-    selectedTicketId = null;
-    renderTickets();
-}
-
-function refreshTicketModal() {
-    const t = state.tickets.find(x => x.id === selectedTicketId);
-    if (t) openTicketViewModal(t);
-    renderTickets();
-}
+function closeTicketModal() { closeModal('ticketViewModal'); selectedTicketId = null; renderTickets(); }
+function refreshTicketModal() { const t = state.tickets.find(x => x.id === selectedTicketId); if (t) openTicketViewModal(t); renderTickets(); }
 
 function resolveTicketFromModal(id) {
     const t = state.tickets.find(x => x.id === id);
@@ -729,7 +759,6 @@ function reopenTicketFromModal(id) {
 function deleteTicketFromModal(id) {
     if (!isAdmin()) return;
     if (!confirm('Удалить заявку? Это действие необратимо.')) return;
-    const currentUser = getCurrentUser();
     state.tickets = state.tickets.filter(t => t.id !== id);
     save();
     toast('Заявка удалена');
@@ -839,7 +868,25 @@ function toggleRecurrence(id) {
     if (document.getElementById('ticketViewModal').classList.contains('active')) refreshTicketModal(); 
 }
 
-function openTicketModal() { document.getElementById('ticketForm').reset(); document.getElementById('ticketId').value = ''; document.getElementById('ticketModalTitle').textContent = 'Новая заявка'; document.getElementById('recurrenceEnabled').checked = false; document.getElementById('recurrenceConfig').classList.remove('active'); document.getElementById('recurrenceInterval').value = 1; document.getElementById('recurrencePeriod').value = 'daily'; document.getElementById('recurrenceFirstRun').value = ''; document.getElementById('recurrenceEndDate').value = ''; document.getElementById('recurrenceMaxCount').value = ''; document.querySelectorAll('.recurrence-presets button').forEach(b => b.classList.remove('active')); document.getElementById('ticketClient').innerHTML = '<option value="">Выберите</option>' + state.clients.map(c => `<option value="${c.id}">${c.name}</option>`).join(''); document.getElementById('ticketCategory').innerHTML = state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join(''); const assignees = isAdmin() ? state.users : state.users.filter(u => u.id === CURRENT_USER_ID); document.getElementById('ticketAssignee').innerHTML = '<option value="">Не назначен</option>' + assignees.map(u => `<option value="${u.id}" ${u.id === CURRENT_USER_ID ? 'selected' : ''}>${u.fullName}</option>`).join(''); openModal('ticketModal'); }
+function openTicketModal() { 
+    document.getElementById('ticketForm').reset(); 
+    document.getElementById('ticketId').value = ''; 
+    document.getElementById('ticketModalTitle').textContent = 'Новая заявка'; 
+    document.getElementById('recurrenceEnabled').checked = false; 
+    document.getElementById('recurrenceConfig').classList.remove('active'); 
+    document.getElementById('recurrenceInterval').value = 1; 
+    document.getElementById('recurrencePeriod').value = 'daily'; 
+    document.getElementById('recurrenceFirstRun').value = ''; 
+    document.getElementById('recurrenceEndDate').value = ''; 
+    document.getElementById('recurrenceMaxCount').value = ''; 
+    document.querySelectorAll('.recurrence-presets button').forEach(b => b.classList.remove('active')); 
+    document.getElementById('ticketClient').innerHTML = '<option value="">Выберите</option>' + state.clients.map(c => `<option value="${c.id}">${c.name}</option>`).join(''); 
+    document.getElementById('ticketCategory').innerHTML = state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join(''); 
+    // ✅ Все пользователи могут выбирать любого исполнителя
+    const currentUser = getCurrentUser();
+    document.getElementById('ticketAssignee').innerHTML = '<option value="">Не назначен</option>' + state.users.map(u => `<option value="${u.id}" ${u.id === (currentUser ? currentUser.id : '') ? 'selected' : ''}>${u.fullName}</option>`).join(''); 
+    openModal('ticketModal'); 
+}
 
 function saveTicket(e) { 
     e.preventDefault(); 
@@ -857,7 +904,6 @@ function saveTicket(e) {
     } 
     let assigneeId = document.getElementById('ticketAssignee').value; 
     if (!isAdmin() && !assigneeId) assigneeId = CURRENT_USER_ID; 
-    if (!isAdmin() && assigneeId !== CURRENT_USER_ID) { toast('Вы можете назначать заявки только себе', 'error'); return; } 
     const currentUser = getCurrentUser();
     const data = { subject: document.getElementById('ticketSubject').value, clientId: document.getElementById('ticketClient').value, category: document.getElementById('ticketCategory').value, priority: document.getElementById('ticketPriority').value, assigneeId, description: document.getElementById('ticketDescription').value, recurrence, updatedAt: new Date().toISOString() }; 
     if (id) { 
