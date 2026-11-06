@@ -19,15 +19,21 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  
+  let isSaving = false;
+  let lastSavedAt = 0;
 
   window.saveToFirebase = async function() {
+    isSaving = true;
     try {
       await setDoc(doc(db, 'crm_data', 'main'), {
         users: state.users, departments: state.departments, clients: state.clients,
         companies: state.companies, tickets: state.tickets, categories: state.categories,
         settings: state.settings, updatedAt: new Date().toISOString()
       }, { merge: true });
+      lastSavedAt = Date.now();
     } catch (e) { console.error("Ошибка Firebase:", e); }
+    finally { isSaving = false; }
   };
 
   window.initFirebase = async function() {
@@ -46,18 +52,29 @@
     }
 
     onSnapshot(docRef, (doc) => {
-      if (doc.exists()) {
+      if (doc.exists() && !isSaving) {
         const newData = doc.data();
-        state.users = newData.users; state.departments = newData.departments;
-        state.clients = newData.clients; state.companies = newData.companies;
-        state.tickets = newData.tickets; state.categories = newData.categories;
-        state.settings = newData.settings;
-        if (document.getElementById('page-tickets')?.classList.contains('active')) renderTickets();
-        if (document.getElementById('page-recurring')?.classList.contains('active')) renderRecurring();
-        if (document.getElementById('page-dashboard')?.classList.contains('active')) renderDashboard();
-        if (document.getElementById('ticketViewModal')?.classList.contains('active') && selectedTicketId) {
-          const t = state.tickets.find(x => x.id === selectedTicketId);
-          if (t) openTicketViewModal(t);
+        const updateTimestamp = newData.updatedAt ? new Date(newData.updatedAt).getTime() : 0;
+        
+        if (updateTimestamp > lastSavedAt) {
+          state.users = newData.users || state.users;
+          state.departments = newData.departments || state.departments;
+          state.clients = newData.clients || state.clients;
+          state.companies = newData.companies || state.companies;
+          state.tickets = newData.tickets || state.tickets;
+          state.categories = newData.categories || state.categories;
+          state.settings = newData.settings || state.settings;
+          
+          if (document.getElementById('page-tickets')?.classList.contains('active')) renderTickets();
+          if (document.getElementById('page-recurring')?.classList.contains('active')) renderRecurring();
+          if (document.getElementById('page-dashboard')?.classList.contains('active')) renderDashboard();
+          if (document.getElementById('ticketViewModal')?.classList.contains('active') && selectedTicketId) {
+            const t = state.tickets.find(x => x.id === selectedTicketId);
+            if (t) openTicketViewModal(t);
+          }
+          if (document.getElementById('page-staff')?.classList.contains('active')) renderStaff();
+          if (document.getElementById('page-users')?.classList.contains('active')) renderUsers();
+          if (document.getElementById('page-departments')?.classList.contains('active')) renderDepartments();
         }
       }
     });
@@ -173,10 +190,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .recurring-indicator { background: #ede9fe; color: #6b21a8; font-size: 10px; padding: 1px 6px; border-radius: 8px; font-weight: 600; }
 .ticket-detail-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); padding: 40px; text-align: center; }
 .empty-icon { font-size: 60px; margin-bottom: 15px; opacity: 0.3; }
-.ticket-detail { padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-.ticket-detail-header { background: var(--card); padding: 15px; border-radius: 8px; border: 1px solid var(--border); }
-.ticket-detail-title { font-size: 18px; font-weight: 600; margin: 6px 0; }
-.ticket-detail-body { display: grid; grid-template-columns: 1fr 260px; gap: 15px; }
 .conversation { background: var(--card); border-radius: 8px; border: 1px solid var(--border); padding: 15px; }
 .conversation-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
 .message { padding: 10px 12px; border-radius: 6px; margin-bottom: 10px; border-left: 3px solid; }
@@ -190,7 +203,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .reply-box { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; }
 .reply-box textarea { width: 100%; min-height: 80px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 13px; resize: vertical; background: var(--card); color: var(--text); }
 .reply-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
-.ticket-sidebar { display: flex; flex-direction: column; gap: 12px; }
 .info-card { background: var(--card); border-radius: 8px; border: 1px solid var(--border); padding: 12px; }
 .info-card-title { font-size: 10px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; font-weight: 600; }
 .info-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 12px; border-bottom: 1px solid var(--border); }
@@ -204,7 +216,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .client-email { font-size: 11px; color: var(--text-light); }
 .btn-resolve { background: var(--success); color: white; padding: 8px 16px; font-weight: 600; border: none; border-radius: 6px; cursor: pointer; }
 .btn-postpone { background: var(--warning); color: white; padding: 8px 16px; font-weight: 600; border: none; border-radius: 6px; cursor: pointer; }
-.ticket-action-bar { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 .resolved-banner { background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: #065f46; padding: 12px 16px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 12px; }
 .resolved-banner-icon { font-size: 24px; }
 .resolved-banner-info { flex: 1; }
@@ -495,7 +506,7 @@ function selectLoginUser(id) { selectedLoginUserId = id; renderUserPicker(); doc
 
 function doLogin() { hideLoginError('loginError'); if (!selectedLoginUserId) { showLoginError('loginError', 'Выберите сотрудника'); return; } const pin = document.getElementById('loginPin').value; if (!/^\d{4}$/.test(pin)) { showLoginError('loginError', 'Пин-код должен содержать 4 цифры'); return; } const user = getUser(selectedLoginUserId); if (!user) { showLoginError('loginError', 'Пользователь не найден'); return; } if (user.pin !== pin) { showLoginError('loginError', 'Неверный пин-код'); return; } CURRENT_USER_ID = user.id; state.session = { userId: user.id, loginAt: new Date().toISOString() }; save(); toast('👋 Добро пожаловать, ' + user.fullName.split(' ')[0] + '!'); showApp(); }
 
-function doRegister() { hideLoginError('registerError'); const fullName = document.getElementById('regFullName').value.trim(); const phone = document.getElementById('regPhone').value.trim(); const departmentId = document.getElementById('regDepartment').value; const pin = document.getElementById('regPin').value; const pinConfirm = document.getElementById('regPinConfirm').value; if (!fullName || fullName.split(' ').length < 2) { showLoginError('registerError', 'Введите ФИО полностью'); return; } if (!phone || phone.length < 5) { showLoginError('registerError', 'Введите корректный телефон'); return; } if (!departmentId) { showLoginError('registerError', 'Выберите отдел'); return; } if (!/^\d{4}$/.test(pin)) { showLoginError('registerError', 'Пин-код должен содержать 4 цифры'); return; } if (pin !== pinConfirm) { showLoginError('registerError', 'Пин-коды не совпадают'); return; } if (state.users.some(u => u.phone === phone)) { showLoginError('registerError', 'Телефон уже зарегистрирован'); return; } const newUser = { id: 'user-' + Date.now(), fullName, phone, pin, role: 'staff', departmentId, createdAt: new Date().toISOString() }; state.users.push(newUser); save(); CURRENT_USER_ID = newUser.id; state.session = { userId: newUser.id, loginAt: new Date().toISOString() }; save(); toast('✅ Регистрация успешна!'); showApp(); }
+function doRegister() { hideLoginError('registerError'); const fullName = document.getElementById('regFullName').value.trim(); const phone = document.getElementById('regPhone').value.trim(); const departmentId = document.getElementById('regDepartment').value; const pin = document.getElementById('regPin').value; const pinConfirm = document.getElementById('regPinConfirm').value; if (!fullName || fullName.split(' ').length < 2) { showLoginError('registerError', 'Введите ФИО полностью'); return; } if (!phone || phone.length < 5) { showLoginError('registerError', 'Введите корректный телефон'); return; } if (!departmentId) { showLoginError('registerError', 'Выберите отдел'); return; } if (!/^\d{4}$/.test(pin)) { showLoginError('registerError', 'Пин-код должен содержать 4 цифры'); return; } if (pin !== pinConfirm) { showLoginError('registerError', 'Пин-коды не совпадают'); return; } if (state.users.some(u => u.phone === phone)) { showLoginError('registerError', 'Телефон уже зарегистрирован'); return; } const newUser = { id: 'user-' + Date.now(), fullName, phone, pin, role: 'staff', departmentId, createdAt: new Date().toISOString() }; state.users.push(newUser); CURRENT_USER_ID = newUser.id; state.session = { userId: newUser.id, loginAt: new Date().toISOString() }; save().then(() => { toast('✅ Регистрация успешна! Добро пожаловать, ' + fullName.split(' ')[0] + '!'); showApp(); }); }
 
 function doLogout() { if (!confirm('Выйти из системы?')) return; state.session = null; CURRENT_USER_ID = null; selectedLoginUserId = null; selectedTicketId = null; save(); document.getElementById('loginPin').value = ''; showLogin(); }
 function renderRegDepartments() { document.getElementById('regDepartment').innerHTML = '<option value="">— Выберите отдел —</option>' + state.departments.map(d => `<option value="${d.id}">${d.name}</option>`).join(''); }
@@ -688,10 +699,13 @@ function refreshTicketModal() {
 function resolveTicketFromModal(id) {
     const t = state.tickets.find(x => x.id === id);
     if (!t || t.status === 'solved' || t.status === 'closed') return;
+    const currentUser = getCurrentUser();
     t.status = 'solved';
     t.resolvedAt = new Date().toISOString();
     t.updatedAt = new Date().toISOString();
     t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: '✅ Заявка отмечена как решённая', createdAt: new Date().toISOString() });
+    t.history = t.history || [];
+    t.history.push({ action: 'resolved', at: new Date().toISOString(), by: CURRENT_USER_ID, details: currentUser ? currentUser.fullName : 'Неизвестно' });
     save();
     toast('✅ Заявка решена');
     closeTicketModal();
@@ -700,10 +714,13 @@ function resolveTicketFromModal(id) {
 function reopenTicketFromModal(id) {
     const t = state.tickets.find(x => x.id === id);
     if (!t) return;
+    const currentUser = getCurrentUser();
     t.status = 'open';
     t.resolvedAt = null;
     t.updatedAt = new Date().toISOString();
     t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: '🔓 Заявка открыта заново', createdAt: new Date().toISOString() });
+    t.history = t.history || [];
+    t.history.push({ action: 'reopened', at: new Date().toISOString(), by: CURRENT_USER_ID, details: currentUser ? currentUser.fullName : 'Неизвестно' });
     save();
     toast('🔓 Заявка открыта заново');
     refreshTicketModal();
@@ -712,6 +729,7 @@ function reopenTicketFromModal(id) {
 function deleteTicketFromModal(id) {
     if (!isAdmin()) return;
     if (!confirm('Удалить заявку? Это действие необратимо.')) return;
+    const currentUser = getCurrentUser();
     state.tickets = state.tickets.filter(t => t.id !== id);
     save();
     toast('Заявка удалена');
@@ -723,9 +741,12 @@ function sendReplyFromModal(ticketId) {
     if (!text) { toast('Введите текст', 'error'); return; }
     const t = state.tickets.find(x => x.id === ticketId);
     if (!t) return;
+    const currentUser = getCurrentUser();
     t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text, createdAt: new Date().toISOString() });
     t.updatedAt = new Date().toISOString();
     if (t.status === 'new') t.status = 'open';
+    t.history = t.history || [];
+    t.history.push({ action: 'replied', at: new Date().toISOString(), by: CURRENT_USER_ID, details: currentUser ? currentUser.fullName : 'Неизвестно' });
     save();
     toast('Ответ отправлен');
     refreshTicketModal();
@@ -734,10 +755,13 @@ function sendReplyFromModal(ticketId) {
 function resolveTicket(id) {
     const t = state.tickets.find(x => x.id === id);
     if (!t || t.status === 'solved' || t.status === 'closed') return;
+    const currentUser = getCurrentUser();
     t.status = 'solved';
     t.resolvedAt = new Date().toISOString();
     t.updatedAt = new Date().toISOString();
     t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: '✅ Заявка отмечена как решённая', createdAt: new Date().toISOString() });
+    t.history = t.history || [];
+    t.history.push({ action: 'resolved', at: new Date().toISOString(), by: CURRENT_USER_ID, details: currentUser ? currentUser.fullName : 'Неизвестно' });
     save();
     toast('✅ Заявка решена');
     renderTickets();
@@ -746,10 +770,13 @@ function resolveTicket(id) {
 function reopenTicket(id) {
     const t = state.tickets.find(x => x.id === id);
     if (!t) return;
+    const currentUser = getCurrentUser();
     t.status = 'open';
     t.resolvedAt = null;
     t.updatedAt = new Date().toISOString();
     t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: '🔓 Заявка открыта заново', createdAt: new Date().toISOString() });
+    t.history = t.history || [];
+    t.history.push({ action: 'reopened', at: new Date().toISOString(), by: CURRENT_USER_ID, details: currentUser ? currentUser.fullName : 'Неизвестно' });
     save();
     toast('🔓 Заявка открыта заново');
     renderTickets();
@@ -766,13 +793,102 @@ function openPostponeModal(id) {
 }
 
 function setPostponePreset(hours) { const d = new Date(Date.now() + hours * 3600000); document.getElementById('postponeDate').value = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); }
-function confirmPostpone() { const dateValue = document.getElementById('postponeDate').value; if (!dateValue) { toast('Укажите дату', 'error'); return; } const t = state.tickets.find(x => x.id === postponeTicketId); if (!t) return; const reason = document.getElementById('postponeReason').value.trim(); const dueDate = new Date(dateValue); t.status = 'pending'; t.dueAt = dueDate.toISOString(); t.postponeReason = reason; t.updatedAt = new Date().toISOString(); t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: `⏸ Заявка отложена до ${formatDateTime(dueDate.toISOString())}${reason ? '\nПричина: ' + reason : ''}`, createdAt: new Date().toISOString() }); save(); closeModal('postponeModal'); toast('⏸ Заявка отложена'); renderTickets(); if (document.getElementById('ticketViewModal').classList.contains('active')) refreshTicketModal(); }
-function updateTicketField(id, field, value) { const t = state.tickets.find(x => x.id === id); if (!t) return; t[field] = value; t.updatedAt = new Date().toISOString(); if (field === 'status') { if ((value === 'solved' || value === 'closed') && !t.resolvedAt) t.resolvedAt = new Date().toISOString(); if (value !== 'solved' && value !== 'closed') t.resolvedAt = null; } save(); toast('Обновлено'); renderTickets(); }
-function toggleRecurrence(id) { const t = state.tickets.find(x => x.id === id); if (!t || !t.recurrence) return; t.recurrence.enabled = !t.recurrence.enabled; if (t.recurrence.enabled && !t.recurrence.nextRunAt) t.recurrence.nextRunAt = calculateNextRun(t.recurrence); t.updatedAt = new Date().toISOString(); save(); toast(t.recurrence.enabled ? '🔁 Повторение возобновлено' : '⏸ Повторение приостановлено'); renderTickets(); if (document.getElementById('page-recurring').classList.contains('active')) renderRecurring(); if (document.getElementById('ticketViewModal').classList.contains('active')) refreshTicketModal(); }
+function confirmPostpone() { const dateValue = document.getElementById('postponeDate').value; if (!dateValue) { toast('Укажите дату', 'error'); return; } const t = state.tickets.find(x => x.id === postponeTicketId); if (!t) return; const reason = document.getElementById('postponeReason').value.trim(); const dueDate = new Date(dateValue); const currentUser = getCurrentUser(); t.status = 'pending'; t.dueAt = dueDate.toISOString(); t.postponeReason = reason; t.updatedAt = new Date().toISOString(); t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: `⏸ Заявка отложена до ${formatDateTime(dueDate.toISOString())}${reason ? '\nПричина: ' + reason : ''}`, createdAt: new Date().toISOString() }); t.history = t.history || []; t.history.push({ action: 'postponed', at: new Date().toISOString(), by: CURRENT_USER_ID, details: currentUser ? currentUser.fullName : 'Неизвестно' }); save(); closeModal('postponeModal'); toast('⏸ Заявка отложена'); renderTickets(); if (document.getElementById('ticketViewModal').classList.contains('active')) refreshTicketModal(); }
+
+function updateTicketField(id, field, value) { 
+    const t = state.tickets.find(x => x.id === id); 
+    if (!t) return; 
+    const oldValue = t[field];
+    t[field] = value; 
+    t.updatedAt = new Date().toISOString(); 
+    const currentUser = getCurrentUser();
+    t.history = t.history || [];
+    let details = '';
+    if (field === 'status') {
+        details = `${STATUS_LABELS[oldValue] || oldValue} → ${STATUS_LABELS[value] || value} (${currentUser ? currentUser.fullName : 'Неизвестно'})`;
+        if ((value === 'solved' || value === 'closed') && !t.resolvedAt) t.resolvedAt = new Date().toISOString();
+        if (value !== 'solved' && value !== 'closed') t.resolvedAt = null;
+    } else if (field === 'assigneeId') {
+        const newUser = getUser(value);
+        details = `Исполнитель изменён на ${newUser ? newUser.fullName : 'Не назначен'} (${currentUser ? currentUser.fullName : 'Неизвестно'})`;
+    } else if (field === 'priority') {
+        details = `${PRIORITY_LABELS[oldValue] || oldValue} → ${PRIORITY_LABELS[value] || value} (${currentUser ? currentUser.fullName : 'Неизвестно'})`;
+    } else if (field === 'category') {
+        const newCat = getCategory(value);
+        details = `Категория изменена на ${newCat ? newCat.name : 'Не указана'} (${currentUser ? currentUser.fullName : 'Неизвестно'})`;
+    }
+    t.history.push({ action: field + '_changed', at: new Date().toISOString(), by: CURRENT_USER_ID, details });
+    save(); 
+    toast('Обновлено'); 
+    renderTickets(); 
+}
+
+function toggleRecurrence(id) { 
+    const t = state.tickets.find(x => x.id === id); 
+    if (!t || !t.recurrence) return; 
+    const currentUser = getCurrentUser();
+    t.recurrence.enabled = !t.recurrence.enabled; 
+    if (t.recurrence.enabled && !t.recurrence.nextRunAt) t.recurrence.nextRunAt = calculateNextRun(t.recurrence); 
+    t.updatedAt = new Date().toISOString(); 
+    t.history = t.history || [];
+    t.history.push({ action: 'recurrence_toggled', at: new Date().toISOString(), by: CURRENT_USER_ID, details: `${t.recurrence.enabled ? 'Включено' : 'Выключено'} (${currentUser ? currentUser.fullName : 'Неизвестно'})` });
+    save(); 
+    toast(t.recurrence.enabled ? '🔁 Повторение возобновлено' : '⏸ Повторение приостановлено'); 
+    renderTickets(); 
+    if (document.getElementById('page-recurring').classList.contains('active')) renderRecurring(); 
+    if (document.getElementById('ticketViewModal').classList.contains('active')) refreshTicketModal(); 
+}
 
 function openTicketModal() { document.getElementById('ticketForm').reset(); document.getElementById('ticketId').value = ''; document.getElementById('ticketModalTitle').textContent = 'Новая заявка'; document.getElementById('recurrenceEnabled').checked = false; document.getElementById('recurrenceConfig').classList.remove('active'); document.getElementById('recurrenceInterval').value = 1; document.getElementById('recurrencePeriod').value = 'daily'; document.getElementById('recurrenceFirstRun').value = ''; document.getElementById('recurrenceEndDate').value = ''; document.getElementById('recurrenceMaxCount').value = ''; document.querySelectorAll('.recurrence-presets button').forEach(b => b.classList.remove('active')); document.getElementById('ticketClient').innerHTML = '<option value="">Выберите</option>' + state.clients.map(c => `<option value="${c.id}">${c.name}</option>`).join(''); document.getElementById('ticketCategory').innerHTML = state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join(''); const assignees = isAdmin() ? state.users : state.users.filter(u => u.id === CURRENT_USER_ID); document.getElementById('ticketAssignee').innerHTML = '<option value="">Не назначен</option>' + assignees.map(u => `<option value="${u.id}" ${u.id === CURRENT_USER_ID ? 'selected' : ''}>${u.fullName}</option>`).join(''); openModal('ticketModal'); }
 
-function saveTicket(e) { e.preventDefault(); const id = document.getElementById('ticketId').value; let recurrence = null; if (document.getElementById('recurrenceEnabled').checked) { const period = document.getElementById('recurrencePeriod').value; const interval = parseInt(document.getElementById('recurrenceInterval').value) || 1; const firstRun = document.getElementById('recurrenceFirstRun').value; const endDate = document.getElementById('recurrenceEndDate').value; const maxCount = document.getElementById('recurrenceMaxCount').value; if (!firstRun) { toast('Укажите дату первого выполнения', 'error'); return; } const firstRunISO = new Date(firstRun).toISOString(); recurrence = { enabled: true, period, interval, firstRunAt: firstRunISO, nextRunAt: firstRunISO, lastRunAt: null, endDate: endDate ? new Date(endDate).toISOString() : null, maxCount: maxCount ? parseInt(maxCount) : null, currentCount: 0 }; } let assigneeId = document.getElementById('ticketAssignee').value; if (!isAdmin() && !assigneeId) assigneeId = CURRENT_USER_ID; if (!isAdmin() && assigneeId !== CURRENT_USER_ID) { toast('Вы можете назначать заявки только себе', 'error'); return; } const data = { subject: document.getElementById('ticketSubject').value, clientId: document.getElementById('ticketClient').value, category: document.getElementById('ticketCategory').value, priority: document.getElementById('ticketPriority').value, assigneeId, description: document.getElementById('ticketDescription').value, recurrence, updatedAt: new Date().toISOString() }; if (id) { const t = state.tickets.find(x => x.id === id); const oldRecurrence = t.recurrence; Object.assign(t, data); if (oldRecurrence && data.recurrence) { t.recurrence.currentCount = oldRecurrence.currentCount || 0; t.recurrence.lastRunAt = oldRecurrence.lastRunAt; } toast('Заявка обновлена'); } else { const maxNum = state.tickets.reduce((m, t) => Math.max(m, parseInt(t.number.replace('HD-', ''))), 1000); const newT = { id: 't' + Date.now(), number: 'HD-' + (maxNum + 1), ...data, status: 'new', createdAt: new Date().toISOString(), resolvedAt: null, recurringParentId: null, comments: [{ id: 'cm' + Date.now(), authorId: data.clientId, authorType: 'client', text: data.description, createdAt: new Date().toISOString() }], history: [] }; state.tickets.push(newT); selectedTicketId = newT.id; toast(data.recurrence ? '🔁 Повторяющаяся заявка создана' : 'Заявка создана'); } save(); closeModal('ticketModal'); renderTickets(); }
+function saveTicket(e) { 
+    e.preventDefault(); 
+    const id = document.getElementById('ticketId').value; 
+    let recurrence = null; 
+    if (document.getElementById('recurrenceEnabled').checked) { 
+        const period = document.getElementById('recurrencePeriod').value; 
+        const interval = parseInt(document.getElementById('recurrenceInterval').value) || 1; 
+        const firstRun = document.getElementById('recurrenceFirstRun').value; 
+        const endDate = document.getElementById('recurrenceEndDate').value; 
+        const maxCount = document.getElementById('recurrenceMaxCount').value; 
+        if (!firstRun) { toast('Укажите дату первого выполнения', 'error'); return; } 
+        const firstRunISO = new Date(firstRun).toISOString(); 
+        recurrence = { enabled: true, period, interval, firstRunAt: firstRunISO, nextRunAt: firstRunISO, lastRunAt: null, endDate: endDate ? new Date(endDate).toISOString() : null, maxCount: maxCount ? parseInt(maxCount) : null, currentCount: 0 }; 
+    } 
+    let assigneeId = document.getElementById('ticketAssignee').value; 
+    if (!isAdmin() && !assigneeId) assigneeId = CURRENT_USER_ID; 
+    if (!isAdmin() && assigneeId !== CURRENT_USER_ID) { toast('Вы можете назначать заявки только себе', 'error'); return; } 
+    const currentUser = getCurrentUser();
+    const data = { subject: document.getElementById('ticketSubject').value, clientId: document.getElementById('ticketClient').value, category: document.getElementById('ticketCategory').value, priority: document.getElementById('ticketPriority').value, assigneeId, description: document.getElementById('ticketDescription').value, recurrence, updatedAt: new Date().toISOString() }; 
+    if (id) { 
+        const t = state.tickets.find(x => x.id === id); 
+        const oldRecurrence = t.recurrence; 
+        Object.assign(t, data); 
+        if (oldRecurrence && data.recurrence) { t.recurrence.currentCount = oldRecurrence.currentCount || 0; t.recurrence.lastRunAt = oldRecurrence.lastRunAt; } 
+        t.history = t.history || [];
+        t.history.push({ action: 'updated', at: new Date().toISOString(), by: CURRENT_USER_ID, details: `Заявка обновлена (${currentUser ? currentUser.fullName : 'Неизвестно'})` });
+        toast('Заявка обновлена'); 
+    } else { 
+        const maxNum = state.tickets.reduce((m, t) => Math.max(m, parseInt(t.number.replace('HD-', ''))), 1000); 
+        const newT = { 
+            id: 't' + Date.now(), 
+            number: 'HD-' + (maxNum + 1), 
+            ...data, 
+            status: 'new', 
+            createdAt: new Date().toISOString(), 
+            resolvedAt: null, 
+            recurringParentId: null, 
+            comments: [{ id: 'cm' + Date.now(), authorId: data.clientId, authorType: 'client', text: data.description, createdAt: new Date().toISOString() }], 
+            history: [{ action: 'created', at: new Date().toISOString(), by: CURRENT_USER_ID, details: `Заявка создана (${currentUser ? currentUser.fullName : 'Неизвестно'})` }] 
+        }; 
+        state.tickets.push(newT); 
+        selectedTicketId = newT.id; 
+        toast(data.recurrence ? '🔁 Повторяющаяся заявка создана' : 'Заявка создана'); 
+    } 
+    save(); 
+    closeModal('ticketModal'); 
+    renderTickets(); 
+}
 
 function renderRecurring() { const list = document.getElementById('recurringList'); const templates = state.tickets.filter(t => t.recurrence); if (templates.length === 0) { list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔁</div><p>Нет повторяющихся заявок</p></div>'; return; } list.innerHTML = templates.map(t => { const rec = t.recurrence; const client = getClient(t.clientId); const agent = getUser(t.assigneeId); const dep = agent ? getDepartment(agent.departmentId) : null; const instances = state.tickets.filter(x => x.recurringParentId === t.id).length; return `<div class="card" style="margin-bottom:12px;padding:15px;border-left:3px solid #8b5cf6"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px;flex-wrap:wrap"><div style="flex:1"><div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap"><span style="font-size:18px">🔁</span><strong style="font-size:14px;color:var(--primary-dark)">${t.subject}</strong><span class="badge-status status-${t.status}">${STATUS_LABELS[t.status]}</span>${rec.enabled ? '<span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">АКТИВНО</span>' : '<span style="background:#e5e7eb;color:#374151;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">ПРИОСТАНОВЛЕНО</span>'}</div><div style="font-size:11px;color:var(--text-light);display:flex;gap:12px;flex-wrap:wrap"><span>📋 ${t.number}</span><span>👤 ${client ? client.name : '—'}</span><span>🧑‍💼 ${agent ? agent.fullName : 'Не назначен'}</span>${dep ? `<span class="dept-badge" style="background:${dep.color}22;color:${dep.color}">${dep.name}</span>` : ''}<span>🔁 <strong>${formatRecurrence(rec)}</strong></span><span>📄 Экземпляров: <strong>${rec.currentCount || 0}</strong></span></div><div style="font-size:11px;color:var(--text-light);margin-top:5px">${rec.lastRunAt ? `Последнее: ${formatDateTime(rec.lastRunAt)} • ` : ''}${rec.nextRunAt ? `Следующее: <strong>${formatDateTime(rec.nextRunAt)}</strong>` : ''}</div></div><div style="display:flex;gap:5px;align-items:center"><button class="btn btn-small" onclick="selectTicket('${t.id}')">👁 Открыть</button><button class="btn btn-small" onclick="toggleRecurrence('${t.id}')">${rec.enabled ? '⏸ Пауза' : '▶ Старт'}</button></div></div></div>`; }).join(''); }
 
@@ -812,10 +928,7 @@ function updateCategory(id, field, value) { const c = getCategory(id); if (c) { 
 function deleteCategory(id) { if (!confirm('Удалить?')) return; state.categories = state.categories.filter(c => c.id !== id); save(); renderSettings(); }
 function resetDemoData() { if (!confirm('Сбросить все данные?')) return; Object.keys(localStorage).filter(k => k.startsWith('hd_')).forEach(k => localStorage.removeItem(k)); location.reload(); }
 
-// Закрытие модалки заявки по клику на фон
-document.getElementById('ticketViewModal').addEventListener('click', function(e) {
-    if (e.target === this) closeTicketModal();
-});
+document.getElementById('ticketViewModal').addEventListener('click', function(e) { if (e.target === this) closeTicketModal(); });
 
 if (typeof window.initFirebase === 'function') window.initFirebase(); else { seedData(); if (state.settings.theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); checkAuth(); }
 setInterval(() => { if (CURRENT_USER_ID) processRecurringTickets(); }, 30000);
