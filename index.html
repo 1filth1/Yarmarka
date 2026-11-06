@@ -4,127 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ярмарка CRM</title>
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyCrDBQkvL_ngTCaPxx_Gf3pdjpqkMwa4Fo",
-    authDomain: "yarmarka-4fd0f.firebaseapp.com",
-    projectId: "yarmarka-4fd0f",
-    storageBucket: "yarmarka-4fd0f.firebasestorage.app",
-    messagingSenderId: "182060849552",
-    appId: "1:182060849552:web:3eb7a8a6fb4d700bb6fb15"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  let isSaving = false;
-
-  // ✅ СОХРАНЕНИЕ В FIREBASE
-  window.saveToFirebase = async function() {
-    isSaving = true;
-    try {
-      await setDoc(doc(db, 'crm_data', 'main'), {
-        users: state.users, departments: state.departments, clients: state.clients,
-        companies: state.companies, tickets: state.tickets, categories: state.categories,
-        settings: state.settings, updatedAt: new Date().toISOString()
-      });
-      console.log('✅ Сохранено в Firebase');
-    } catch (e) { console.error("❌ Firebase error:", e); }
-    finally { isSaving = false; }
-  };
-
-  // ✅ ЗАГРУЗКА ИЗ FIREBASE
-  window.loadFromFirebase = async function() {
-    try {
-      const docSnap = await getDoc(doc(db, 'crm_data', 'main'));
-      if (docSnap.exists()) {
-        const d = docSnap.data();
-        if (d.users && d.users.length > 0) {
-          state.users = d.users;
-          state.departments = d.departments || state.departments;
-          state.clients = d.clients || state.clients;
-          state.companies = d.companies || state.companies;
-          state.tickets = d.tickets || state.tickets;
-          state.categories = d.categories || state.categories;
-          state.settings = d.settings || state.settings;
-          console.log('✅ Загружено из Firebase:', state.users.length, 'пользователей');
-          return true;
-        }
-      }
-      return false;
-    } catch (e) { 
-      console.error('❌ Ошибка загрузки Firebase:', e); 
-      return false; 
-    }
-  };
-
-  // ✅ ИНИЦИАЛИЗАЦИЯ С ГАРАНТИРОВАННЫМИ ДАННЫМИ
-  window.initFirebase = async function() {
-    console.log('🚀 Инициализация...');
-    
-    // 1. Пытаемся загрузить из Firebase
-    const loaded = await window.loadFromFirebase();
-    
-    // 2. Если Firebase пуст или недоступен — проверяем localStorage
-    if (!loaded || state.users.length === 0) {
-      const localUsers = JSON.parse(localStorage.getItem('hd_users')) || [];
-      if (localUsers.length > 0) {
-        console.log('📦 Загружаем из localStorage:', localUsers.length, 'пользователей');
-        state.users = localUsers;
-        state.departments = JSON.parse(localStorage.getItem('hd_departments')) || [];
-        state.clients = JSON.parse(localStorage.getItem('hd_clients')) || [];
-        state.companies = JSON.parse(localStorage.getItem('hd_companies')) || [];
-        state.tickets = JSON.parse(localStorage.getItem('hd_tickets')) || [];
-        state.categories = JSON.parse(localStorage.getItem('hd_categories')) || [];
-        state.settings = JSON.parse(localStorage.getItem('hd_settings')) || { theme: 'light', companyName: 'Ярмарка CRM', autoArchiveHours: 24, soundEnabled: true };
-        // Сохраняем в Firebase
-        await window.saveToFirebase();
-      }
-    }
-    
-    // 3. Если всё ещё пусто — создаём демо-данные
-    if (state.users.length === 0) {
-      console.log('🆕 Создаём демо-данные с администратором...');
-      seedData();
-      await window.saveToFirebase();
-    }
-    
-    console.log('👥 Итого пользователей:', state.users.length);
-    console.log('👤 Администратор:', state.users.find(u => u.role === 'admin'));
-
-    // 4. Real-time подписка
-    onSnapshot(doc(db, 'crm_data', 'main'), (doc) => {
-      if (doc.exists() && !isSaving) {
-        const newData = doc.data();
-        if (newData.users && newData.users.length > 0) {
-          state.users = newData.users;
-          state.departments = newData.departments || state.departments;
-          state.clients = newData.clients || state.clients;
-          state.companies = newData.companies || state.companies;
-          state.tickets = newData.tickets || state.tickets;
-          state.categories = newData.categories || state.categories;
-          state.settings = newData.settings || state.settings;
-          
-          if (document.getElementById('page-tickets')?.classList.contains('active')) renderTickets();
-          if (document.getElementById('page-recurring')?.classList.contains('active')) renderRecurring();
-          if (document.getElementById('page-dashboard')?.classList.contains('active')) renderDashboard();
-          if (document.getElementById('ticketViewModal')?.classList.contains('active') && selectedTicketId) {
-            const t = state.tickets.find(x => x.id === selectedTicketId);
-            if (t) openTicketViewModal(t);
-          }
-          if (document.getElementById('page-staff')?.classList.contains('active')) renderStaff();
-          if (document.getElementById('page-users')?.classList.contains('active')) renderUsers();
-          if (document.getElementById('page-departments')?.classList.contains('active')) renderDepartments();
-        }
-      }
-    });
-
-    if (state.settings.theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-    checkAuth();
-  };
-</script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root { --primary: #10b981; --primary-hover: #059669; --primary-light: #d1fae5; --primary-dark: #047857; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --info: #3b82f6; --bg: #f0fdf4; --card: #ffffff; --text: #1f2937; --text-light: #6b7280; --text-muted: #9ca3af; --border: #d1fae5; --sidebar: #064e3b; --sidebar-hover: #065f46; }
@@ -444,16 +323,67 @@ tr:hover td { background: var(--bg); }
 <div class="modal" id="departmentModal"><div class="modal-content"><div class="modal-header"><div class="modal-title" id="departmentModalTitle">Новый отдел</div><button class="close-btn" onclick="closeModal('departmentModal')">&times;</button></div><div class="modal-body"><form id="departmentForm" onsubmit="saveDepartment(event)"><input type="hidden" id="departmentId"><div class="form-group"><label>Название *</label><input type="text" id="departmentName" required></div><div class="form-group"><label>Описание</label><textarea id="departmentDescription"></textarea></div><div class="form-group"><label>Цвет</label><input type="color" id="departmentColor" value="#10b981" style="height:40px;cursor:pointer"></div></form></div><div class="modal-footer"><button class="btn" onclick="closeModal('departmentModal')">Отмена</button><button class="btn btn-primary" onclick="document.getElementById('departmentForm').requestSubmit()">Сохранить</button></div></div></div>
 <div class="modal" id="userModal"><div class="modal-content"><div class="modal-header"><div class="modal-title" id="userModalTitle">Редактировать</div><button class="close-btn" onclick="closeModal('userModal')">&times;</button></div><div class="modal-body"><form id="userForm" onsubmit="saveUser(event)"><input type="hidden" id="userId"><div class="form-group"><label>ФИО *</label><input type="text" id="userFullName" required></div><div class="form-group"><label>Телефон *</label><input type="tel" id="userPhone" required></div><div class="form-group"><label>Отдел</label><select id="userDepartment"></select></div><div class="form-group"><label>Роль</label><select id="userRole"><option value="staff">Сотрудник</option><option value="admin">Администратор</option></select></div><div class="form-group"><label>Новый пин-код (4 цифры)</label><input type="password" id="userPin" class="pin-input" maxlength="4" inputmode="numeric" placeholder="••••"></div></form></div><div class="modal-footer"><button class="btn" onclick="closeModal('userModal')">Отмена</button><button class="btn btn-primary" onclick="document.getElementById('userForm').requestSubmit()">Сохранить</button></div></div></div>
 <div class="toast" id="toast"></div>
-<script>
-// ✅ ЕДИНОЕ СОСТОЯНИЕ - загружается только из Firebase
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+// ===== FIREBASE =====
+const firebaseConfig = {
+  apiKey: "AIzaSyCrDBQkvL_ngTCaPxx_Gf3pdjpqkMwa4Fo",
+  authDomain: "yarmarka-4fd0f.firebaseapp.com",
+  projectId: "yarmarka-4fd0f",
+  storageBucket: "yarmarka-4fd0f.firebasestorage.app",
+  messagingSenderId: "182060849552",
+  appId: "1:182060849552:web:3eb7a8a6fb4d700bb6fb15"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+let isSaving = false;
+
+async function saveToFirebase() {
+  isSaving = true;
+  try {
+    await setDoc(doc(db, 'crm_data', 'main'), {
+      users: state.users, departments: state.departments, clients: state.clients,
+      companies: state.companies, tickets: state.tickets, categories: state.categories,
+      settings: state.settings, updatedAt: new Date().toISOString()
+    });
+    console.log('✅ Сохранено в Firebase');
+  } catch (e) { console.error("❌ Firebase error:", e); }
+  finally { isSaving = false; }
+}
+
+async function loadFromFirebase() {
+  try {
+    const docSnap = await getDoc(doc(db, 'crm_data', 'main'));
+    if (docSnap.exists()) {
+      const d = docSnap.data();
+      if (d.users && d.users.length > 0) {
+        state.users = d.users;
+        state.departments = d.departments || state.departments;
+        state.clients = d.clients || state.clients;
+        state.companies = d.companies || state.companies;
+        state.tickets = d.tickets || state.tickets;
+        state.categories = d.categories || state.categories;
+        state.settings = d.settings || state.settings;
+        console.log('✅ Загружено из Firebase:', state.users.length, 'пользователей');
+        return true;
+      }
+    }
+    return false;
+  } catch (e) { console.error('❌ Ошибка загрузки Firebase:', e); return false; }
+}
+
+// ===== STATE =====
 let state = { 
-  users: [], 
-  departments: [], 
-  clients: [], 
-  companies: [], 
-  tickets: [], 
-  categories: [], 
-  settings: { theme: 'light', companyName: 'Ярмарка CRM', autoArchiveHours: 24, soundEnabled: true }, 
+  users: JSON.parse(localStorage.getItem('hd_users')) || [], 
+  departments: JSON.parse(localStorage.getItem('hd_departments')) || [], 
+  clients: JSON.parse(localStorage.getItem('hd_clients')) || [], 
+  companies: JSON.parse(localStorage.getItem('hd_companies')) || [], 
+  tickets: JSON.parse(localStorage.getItem('hd_tickets')) || [], 
+  categories: JSON.parse(localStorage.getItem('hd_categories')) || [], 
+  settings: JSON.parse(localStorage.getItem('hd_settings')) || { theme: 'light', companyName: 'Ярмарка CRM', autoArchiveHours: 24, soundEnabled: true }, 
   session: JSON.parse(localStorage.getItem('hd_session')) || null 
 };
 
@@ -463,7 +393,9 @@ const PRIORITY_LABELS = { low: 'Низкий', medium: 'Средний', high: '
 const ROLE_LABELS = { admin: 'Администратор', staff: 'Сотрудник' };
 const PERIOD_FULL = { hourly: 'часов', daily: 'дней', weekly: 'недель', monthly: 'месяцев' };
 
+// ===== SEED =====
 function seedData() {
+  console.log('🌱 Создаём демо-данные...');
   state.departments = [{ id: 'dep1', name: 'Техническая поддержка', description: 'Решение технических вопросов', color: '#10b981', createdAt: new Date().toISOString() }, { id: 'dep2', name: 'Отдел продаж', description: 'Работа с клиентами', color: '#3b82f6', createdAt: new Date().toISOString() }, { id: 'dep3', name: 'Бухгалтерия', description: 'Финансовые вопросы', color: '#f59e0b', createdAt: new Date().toISOString() }, { id: 'dep4', name: 'Отдел кадров', description: 'Работа с персоналом', color: '#8b5cf6', createdAt: new Date().toISOString() }];
   state.users = [{ id: 'user-admin', fullName: 'Администратор Системы', phone: '+7 900 000-00-00', pin: '1408', role: 'admin', departmentId: 'dep1', createdAt: new Date().toISOString() }, { id: 'user-2', fullName: 'Петров Сергей Александрович', phone: '+7 900 111-11-11', pin: '1111', role: 'staff', departmentId: 'dep1', createdAt: new Date().toISOString() }, { id: 'user-3', fullName: 'Сидорова Анна Игоревна', phone: '+7 900 222-22-22', pin: '2222', role: 'staff', departmentId: 'dep2', createdAt: new Date().toISOString() }];
   state.companies = [{ id: 'co1', name: 'Компания 1', domain: 'company1.ru', createdAt: new Date().toISOString() }, { id: 'co2', name: 'Компания 2', domain: 'company2.ru', createdAt: new Date().toISOString() }, { id: 'co3', name: 'Компания 3', domain: 'company3.ru', createdAt: new Date().toISOString() }];
@@ -473,14 +405,20 @@ function seedData() {
   state.tickets = [{ id: 't1', number: 'HD-1001', subject: 'Не работает оплата', description: 'Ошибка при оплате.', clientId: 'c1', category: 'cat3', priority: 'high', status: 'open', assigneeId: 'user-admin', createdAt: new Date(now - 3600000*2).toISOString(), updatedAt: new Date(now - 3600000).toISOString(), resolvedAt: null, recurrence: null, recurringParentId: null, comments: [{ id: 'cm1', authorId: 'c1', authorType: 'client', text: 'Не могу оплатить.', createdAt: new Date(now - 3600000*2).toISOString() }, { id: 'cm2', authorId: 'user-admin', authorType: 'agent', text: 'Проверю.', createdAt: new Date(now - 3600000).toISOString() }], history: [] }, { id: 't2', number: 'HD-1002', subject: 'Вопрос по тарифу', description: 'Хотел бы узнать о тарифах.', clientId: 'c2', category: 'cat2', priority: 'medium', status: 'new', assigneeId: 'user-3', createdAt: new Date(now - 3600000).toISOString(), updatedAt: new Date(now - 3600000).toISOString(), resolvedAt: null, recurrence: null, recurringParentId: null, comments: [{ id: 'cm4', authorId: 'c2', authorType: 'client', text: 'Расскажите про тарифы.', createdAt: new Date(now - 3600000).toISOString() }], history: [] }, { id: 't3', number: 'HD-1003', subject: 'Возврат средств', description: 'Товар не соответствует.', clientId: 'c3', category: 'cat4', priority: 'urgent', status: 'pending', assigneeId: 'user-2', createdAt: new Date(now - 86400000).toISOString(), updatedAt: new Date(now - 3600000*5).toISOString(), dueAt: new Date(now + 86400000).toISOString(), resolvedAt: null, postponeReason: 'Ждём фото', recurrence: null, recurringParentId: null, comments: [{ id: 'cm5', authorId: 'c3', authorType: 'client', text: 'Товар повреждённый.', createdAt: new Date(now - 86400000).toISOString() }], history: [] }, { id: 't4', number: 'HD-1004', subject: 'Ошибка при входе', description: 'Не могу войти в ЛК.', clientId: 'c1', category: 'cat1', priority: 'medium', status: 'solved', assigneeId: 'user-2', createdAt: new Date(now - 86400000*2).toISOString(), updatedAt: new Date(now - 86400000).toISOString(), resolvedAt: new Date(now - 86400000).toISOString(), recurrence: null, recurringParentId: null, comments: [{ id: 'cm8', authorId: 'user-2', authorType: 'agent', text: 'Сбросил пароль.', createdAt: new Date(now - 86400000).toISOString() }], history: [] }, { id: 't-rec-1', number: 'HD-1005', subject: 'Еженедельная проверка серверов', description: 'Плановая проверка.', clientId: 'c1', category: 'cat1', priority: 'medium', status: 'open', assigneeId: 'user-2', tags: ['maintenance'], createdAt: new Date(now - 86400000*7).toISOString(), updatedAt: new Date(now - 3600000).toISOString(), resolvedAt: null, postponeReason: '', recurringParentId: null, recurrence: { enabled: true, period: 'weekly', interval: 1, firstRunAt: new Date(now - 86400000*7).toISOString(), nextRunAt: new Date(now + 86400000*5).toISOString(), lastRunAt: new Date(now - 86400000*2).toISOString(), endDate: null, maxCount: null, currentCount: 3 }, comments: [{ id: 'cm-rec-1', authorId: 'c1', authorType: 'client', text: 'Плановая проверка.', createdAt: new Date(now - 86400000*7).toISOString() }, { id: 'cm-rec-2', authorId: 'system', authorType: 'system', text: '🔁 Авто-экземпляр создан.', createdAt: new Date(now - 86400000*2).toISOString() }], history: [{ action: 'created', at: new Date(now - 86400000*7).toISOString(), by: 'c1' }] }];
 }
 
-// ✅ СОХРАНЕНИЕ - только в Firebase, localStorage только для сессии
 function save() {
-  localStorage.setItem('hd_session', state.session ? JSON.stringify(state.session) : '');
-  if (typeof window.saveToFirebase === 'function') {
-    window.saveToFirebase();
-  }
+  localStorage.setItem('hd_users', JSON.stringify(state.users));
+  localStorage.setItem('hd_departments', JSON.stringify(state.departments));
+  localStorage.setItem('hd_clients', JSON.stringify(state.clients));
+  localStorage.setItem('hd_companies', JSON.stringify(state.companies));
+  localStorage.setItem('hd_tickets', JSON.stringify(state.tickets));
+  localStorage.setItem('hd_categories', JSON.stringify(state.categories));
+  localStorage.setItem('hd_settings', JSON.stringify(state.settings));
+  if (state.session) localStorage.setItem('hd_session', JSON.stringify(state.session));
+  else localStorage.removeItem('hd_session');
+  saveToFirebase();
 }
 
+// ===== HELPERS =====
 function getUser(id) { return state.users.find(u => u.id === id); }
 function getClient(id) { return state.clients.find(c => c.id === id); }
 function getCompany(id) { return state.companies.find(c => c.id === id); }
@@ -547,13 +485,9 @@ function processRecurringTickets() {
 function toggleRecurrenceConfig() { const enabled = document.getElementById('recurrenceEnabled').checked; document.getElementById('recurrenceConfig').classList.toggle('active', enabled); if (enabled && !document.getElementById('recurrenceFirstRun').value) { const d = new Date(Date.now() + 3600000); document.getElementById('recurrenceFirstRun').value = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); } }
 function setRecurrencePreset(period, interval) { document.getElementById('recurrenceEnabled').checked = true; document.getElementById('recurrencePeriod').value = period; document.getElementById('recurrenceInterval').value = interval; document.getElementById('recurrenceConfig').classList.add('active'); document.querySelectorAll('.recurrence-presets button').forEach(b => b.classList.remove('active')); if (event && event.target) event.target.classList.add('active'); }
 
-// ✅ АВТОРИЗАЦИЯ - загружаем из Firebase перед входом
+// ===== AUTH =====
 async function checkAuth() {
   console.log('🔐 Проверка авторизации...');
-  
-  // ✅ ВСЕГДА загружаем свежие данные из Firebase
-  await window.loadFromFirebase();
-  
   if (state.session && state.session.userId) {
     const user = getUser(state.session.userId);
     if (user) {
@@ -578,7 +512,6 @@ function hideLoginError(id) { document.getElementById(id).classList.remove('show
 
 function renderUserPicker() { 
     const picker = document.getElementById('userPicker'); 
-    console.log('📋 Пользователей в базе:', state.users.length);
     if (state.users.length === 0) { picker.innerHTML = '<div style="padding:15px;text-align:center;color:var(--text-muted);font-size:12px">Нет зарегистрированных сотрудников</div>'; return; } 
     picker.innerHTML = state.users.map(u => { 
         const dep = getDepartment(u.departmentId); 
@@ -587,19 +520,14 @@ function renderUserPicker() {
 }
 function selectLoginUser(id) { selectedLoginUserId = id; renderUserPicker(); document.getElementById('loginPin').focus(); }
 
-// ✅ ВХОД - загружаем свежие данные из Firebase
 async function doLogin() { 
     console.log('🔑 doLogin вызван');
     hideLoginError('loginError'); 
     if (!selectedLoginUserId) { showLoginError('loginError', 'Выберите сотрудника'); return; } 
     const pin = document.getElementById('loginPin').value; 
     if (!/^\d{4}$/.test(pin)) { showLoginError('loginError', 'Пин-код должен содержать 4 цифры'); return; } 
-    
-    // ✅ ЗАГРУЖАЕМ СВЕЖИЕ ДАННЫЕ ИЗ FIREBASE
-    await window.loadFromFirebase();
-    
     const user = getUser(selectedLoginUserId); 
-    console.log('🔍 Найден пользователь:', user ? user.fullName : 'НЕ НАЙДЕН', 'Пин:', user ? user.pin : '—', 'Введён:', pin);
+    console.log('🔍 Пользователь:', user ? user.fullName : 'НЕ НАЙДЕН', 'Пин:', user ? user.pin : '—', 'Введён:', pin);
     if (!user) { showLoginError('loginError', 'Пользователь не найден. Обновите страницу.'); return; } 
     if (user.pin !== pin) { showLoginError('loginError', 'Неверный пин-код'); return; } 
     CURRENT_USER_ID = user.id; 
@@ -609,7 +537,6 @@ async function doLogin() {
     showApp(); 
 }
 
-// ✅ РЕГИСТРАЦИЯ - добавляем в единую базу Firebase
 async function doRegister() { 
     hideLoginError('registerError'); 
     const fullName = document.getElementById('regFullName').value.trim(); 
@@ -622,10 +549,6 @@ async function doRegister() {
     if (!departmentId) { showLoginError('registerError', 'Выберите отдел'); return; } 
     if (!/^\d{4}$/.test(pin)) { showLoginError('registerError', 'Пин-код должен содержать 4 цифры'); return; } 
     if (pin !== pinConfirm) { showLoginError('registerError', 'Пин-коды не совпадают'); return; } 
-    
-    // ✅ ЗАГРУЖАЕМ СВЕЖИЕ ДАННЫЕ ПЕРЕД РЕГИСТРАЦИЕЙ
-    await window.loadFromFirebase();
-    
     if (state.users.some(u => u.phone === phone)) { showLoginError('registerError', 'Телефон уже зарегистрирован'); return; } 
     const newUser = { id: 'user-' + Date.now(), fullName, phone, pin, role: 'staff', departmentId, createdAt: new Date().toISOString() }; 
     state.users.push(newUser);
@@ -643,6 +566,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Enter' && document.ge
 
 document.querySelectorAll('.nav-item').forEach(item => { item.addEventListener('click', () => { document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); item.classList.add('active'); const page = item.dataset.page; document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); document.getElementById('page-' + page).classList.add('active'); if (page === 'dashboard') renderDashboard(); if (page === 'clients') renderClients(); if (page === 'companies') renderCompanies(); if (page === 'staff') renderStaff(); if (page === 'reports') renderReports(); if (page === 'tickets') renderTickets(); if (page === 'recurring') renderRecurring(); if (page === 'departments') renderDepartments(); if (page === 'users') renderUsers(); if (page === 'settings') renderSettings(); }); });
 
+// ===== TICKETS =====
 function renderStatusCards() {
   const visible = getVisibleTickets();
   const all = visible.length;
@@ -1151,17 +1075,73 @@ function importData(event) {
 
 document.getElementById('ticketViewModal').addEventListener('click', function(e) { if (e.target === this) closeTicketModal(); });
 
-// ✅ ЗАПУСК - только Firebase, без localStorage для данных
-if (typeof window.initFirebase === 'function') {
-  window.initFirebase();
-} else {
-  seedData();
+// ===== INIT =====
+async function initApp() {
+  console.log('🚀 Инициализация приложения...');
+  
+  const loaded = await loadFromFirebase();
+  
+  if (!loaded || state.users.length === 0) {
+    const localUsers = JSON.parse(localStorage.getItem('hd_users')) || [];
+    if (localUsers.length > 0) {
+      console.log('📦 Загружаем из localStorage:', localUsers.length, 'пользователей');
+      state.users = localUsers;
+      state.departments = JSON.parse(localStorage.getItem('hd_departments')) || [];
+      state.clients = JSON.parse(localStorage.getItem('hd_clients')) || [];
+      state.companies = JSON.parse(localStorage.getItem('hd_companies')) || [];
+      state.tickets = JSON.parse(localStorage.getItem('hd_tickets')) || [];
+      state.categories = JSON.parse(localStorage.getItem('hd_categories')) || [];
+      state.settings = JSON.parse(localStorage.getItem('hd_settings')) || { theme: 'light', companyName: 'Ярмарка CRM', autoArchiveHours: 24, soundEnabled: true };
+      await saveToFirebase();
+    }
+  }
+  
+  if (state.users.length === 0) {
+    console.log('🆕 Создаём демо-данные с администратором (пин 1408)...');
+    seedData();
+    await saveToFirebase();
+  }
+  
+  console.log('👥 Итого пользователей:', state.users.length);
+  const admin = state.users.find(u => u.role === 'admin');
+  console.log('👤 Администратор:', admin ? `${admin.fullName} (пин: ${admin.pin})` : 'НЕ НАЙДЕН');
+
+  onSnapshot(doc(db, 'crm_data', 'main'), (doc) => {
+    if (doc.exists() && !isSaving) {
+      const newData = doc.data();
+      if (newData.users && newData.users.length > 0) {
+        state.users = newData.users;
+        state.departments = newData.departments || state.departments;
+        state.clients = newData.clients || state.clients;
+        state.companies = newData.companies || state.companies;
+        state.tickets = newData.tickets || state.tickets;
+        state.categories = newData.categories || state.categories;
+        state.settings = newData.settings || state.settings;
+        
+        if (document.getElementById('page-tickets')?.classList.contains('active')) renderTickets();
+        if (document.getElementById('page-recurring')?.classList.contains('active')) renderRecurring();
+        if (document.getElementById('page-dashboard')?.classList.contains('active')) renderDashboard();
+        if (document.getElementById('ticketViewModal')?.classList.contains('active') && selectedTicketId) {
+          const t = state.tickets.find(x => x.id === selectedTicketId);
+          if (t) openTicketViewModal(t);
+        }
+        if (document.getElementById('page-staff')?.classList.contains('active')) renderStaff();
+        if (document.getElementById('page-users')?.classList.contains('active')) renderUsers();
+        if (document.getElementById('page-departments')?.classList.contains('active')) renderDepartments();
+      }
+    }
+  });
+
   if (state.settings.theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
   checkAuth();
   startAutoArchive();
 }
+
+initApp();
+
 setInterval(() => { if (CURRENT_USER_ID) processRecurringTickets(); }, 30000);
 setTimeout(() => { if (CURRENT_USER_ID) processRecurringTickets(); }, 3000);
+
 console.log('%c🎪 Ярмарка CRM - Единая база Firebase', 'color:#10b981;font-size:16px;font-weight:bold');
 </script>
 </body>
