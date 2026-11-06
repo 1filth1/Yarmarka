@@ -55,6 +55,10 @@
         if (document.getElementById('page-tickets')?.classList.contains('active')) renderTickets();
         if (document.getElementById('page-recurring')?.classList.contains('active')) renderRecurring();
         if (document.getElementById('page-dashboard')?.classList.contains('active')) renderDashboard();
+        if (document.getElementById('ticketViewModal')?.classList.contains('active') && selectedTicketId) {
+          const t = state.tickets.find(x => x.id === selectedTicketId);
+          if (t) openTicketViewModal(t);
+        }
       }
     });
 
@@ -228,6 +232,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .modal.active { display: flex; }
 .modal-content { background: var(--card); border-radius: 10px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; color: var(--text); }
 .modal-content.large { max-width: 900px; }
+.ticket-modal-content { max-width: 1000px; width: 95%; max-height: 90vh; }
+.ticket-modal-body { display: grid; grid-template-columns: 1fr 300px; gap: 20px; padding: 20px; overflow-y: auto; max-height: calc(90vh - 120px); }
+.ticket-modal-header { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; }
+.ticket-modal-title-area { flex: 1; }
+.ticket-modal-actions { display: flex; gap: 8px; margin-left: 15px; }
+@media (max-width: 900px) { .ticket-modal-body { grid-template-columns: 1fr; } }
 .modal-header { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
 .modal-title { font-size: 16px; font-weight: 600; color: var(--primary-dark); }
 .modal-body { padding: 20px; }
@@ -363,7 +373,7 @@ tr:hover td { background: var(--bg); }
         </div>
         <div class="tickets-list" id="ticketsList"></div>
       </div>
-      <div class="tickets-detail-panel" id="ticketDetail"><div class="ticket-detail-empty"><div class="empty-icon">📥</div><h3>Выберите заявку</h3></div></div>
+      <div class="tickets-detail-panel" id="ticketDetail"><div class="ticket-detail-empty"><div class="empty-icon">📥</div><h3>Выберите заявку</h3><p style="margin-top:8px;font-size:13px;color:var(--text-light)">Нажмите на заявку в списке, чтобы открыть её</p></div></div>
     </div>
   </div>
   <div class="page" id="page-recurring"><div class="topbar"><div class="topbar-title">🔁 Повторяющиеся заявки</div><div class="topbar-actions"><button class="btn btn-primary" onclick="openTicketModal()">+ Создать шаблон</button></div></div><div class="page-content"><div style="margin-bottom:15px;padding:12px;background:linear-gradient(135deg, #f5f3ff, #ede9fe);border-radius:8px;font-size:12px;color:#6b21a8;border-left:3px solid #8b5cf6">🔁 Шаблоны повторяющихся заявок</div><div id="recurringList"></div></div></div>
@@ -376,6 +386,16 @@ tr:hover td { background: var(--bg); }
   <div class="page" id="page-users"><div class="topbar"><div class="topbar-title">🔐 Пользователи</div></div><div class="page-content"><div style="margin-bottom:15px;padding:12px;background:#fef3c7;border-radius:8px;font-size:12px;color:#92400e;border-left:3px solid #f59e0b">🔐 Режим администратора</div><div class="card"><table><thead><tr><th>ФИО</th><th>Телефон</th><th>Отдел</th><th>Роль</th><th>Пин-код</th><th>Создан</th><th>Действия</th></tr></thead><tbody id="usersTable"></tbody></table></div></div></div>
   <div class="page" id="page-settings"><div class="topbar"><div class="topbar-title">⚙️ Настройки</div></div><div class="settings-layout"><div class="settings-nav"><div class="settings-nav-item active" data-settings="profile">Мой профиль</div><div class="settings-nav-item admin-only" data-settings="general">Общие</div><div class="settings-nav-item admin-only" data-settings="categories">Категории</div><div class="settings-nav-item admin-only" data-settings="data">Данные</div></div><div class="settings-content" id="settingsContent"></div></div></div>
 </main>
+<div class="modal" id="ticketViewModal">
+  <div class="modal-content ticket-modal-content">
+    <div class="ticket-modal-header">
+      <div class="ticket-modal-title-area" id="ticketModalHeaderContent"></div>
+      <div class="ticket-modal-actions" id="ticketModalActions"></div>
+      <button class="close-btn" onclick="closeTicketModal()">&times;</button>
+    </div>
+    <div class="ticket-modal-body" id="ticketModalBody"></div>
+  </div>
+</div>
 <div class="modal" id="ticketModal"><div class="modal-content large"><div class="modal-header"><div class="modal-title" id="ticketModalTitle">Новая заявка</div><button class="close-btn" onclick="closeModal('ticketModal')">&times;</button></div><div class="modal-body"><form id="ticketForm" onsubmit="saveTicket(event)"><input type="hidden" id="ticketId"><div class="form-group"><label>Тема *</label><input type="text" id="ticketSubject" required></div><div class="form-row"><div class="form-group"><label>Заявитель *</label><select id="ticketClient" required></select></div><div class="form-group"><label>Категория</label><select id="ticketCategory"></select></div></div><div class="form-row"><div class="form-group"><label>Приоритет</label><select id="ticketPriority"><option value="low">Низкий</option><option value="medium" selected>Средний</option><option value="high">Высокий</option><option value="urgent">Срочный</option></select></div><div class="form-group"><label>Исполнитель</label><select id="ticketAssignee"></select></div></div><div class="form-group"><label>Описание *</label><textarea id="ticketDescription" required></textarea></div><div class="recurrence-section"><div class="recurrence-header"><label><input type="checkbox" id="recurrenceEnabled" onchange="toggleRecurrenceConfig()">🔁 Сделать повторяющейся</label></div><div class="recurrence-config" id="recurrenceConfig"><div class="recurrence-presets"><button type="button" onclick="setRecurrencePreset('hourly', 1)">Каждый час</button><button type="button" onclick="setRecurrencePreset('hourly', 4)">Каждые 4 часа</button><button type="button" onclick="setRecurrencePreset('daily', 1)">Ежедневно</button><button type="button" onclick="setRecurrencePreset('weekly', 1)">Еженедельно</button><button type="button" onclick="setRecurrencePreset('monthly', 1)">Ежемесячно</button></div><div class="recurrence-grid"><div class="form-group" style="margin-bottom:0"><label>Интервал</label><input type="number" id="recurrenceInterval" value="1" min="1"></div><div class="form-group" style="margin-bottom:0"><label>Период</label><select id="recurrencePeriod"><option value="hourly">Часы</option><option value="daily" selected>Дни</option><option value="weekly">Недели</option><option value="monthly">Месяцы</option></select></div></div><div class="form-group" style="margin-top:10px;margin-bottom:0"><label>Первое выполнение</label><input type="datetime-local" id="recurrenceFirstRun"></div><div class="form-row" style="margin-top:10px"><div class="form-group" style="margin-bottom:0"><label>Окончание</label><input type="datetime-local" id="recurrenceEndDate"></div><div class="form-group" style="margin-bottom:0"><label>Макс. кол-во</label><input type="number" id="recurrenceMaxCount" min="1" placeholder="∞"></div></div></div></div></form></div><div class="modal-footer"><button class="btn" onclick="closeModal('ticketModal')">Отмена</button><button class="btn btn-primary" onclick="document.getElementById('ticketForm').requestSubmit()">Сохранить</button></div></div></div>
 <div class="modal" id="postponeModal"><div class="modal-content" style="max-width:480px"><div class="modal-header"><div class="modal-title">⏸ Отложить</div><button class="close-btn" onclick="closeModal('postponeModal')">&times;</button></div><div class="modal-body"><div style="text-align:center;padding:10px 0"><div style="font-size:48px;margin-bottom:15px">⏸️</div><div style="font-size:14px;font-weight:500;margin-bottom:15px">Когда вернуться?</div><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:15px"><button class="btn btn-small" onclick="setPostponePreset(1)">1 час</button><button class="btn btn-small" onclick="setPostponePreset(4)">4 часа</button><button class="btn btn-small" onclick="setPostponePreset(24)">Завтра</button><button class="btn btn-small" onclick="setPostponePreset(168)">Неделя</button></div><input type="datetime-local" id="postponeDate" style="width:100%;padding:9px;border:1px solid var(--border);border-radius:6px;font-family:inherit;background:var(--card);color:var(--text)"><div style="margin-top:12px"><textarea id="postponeReason" placeholder="Причина" style="width:100%;padding:9px;border:1px solid var(--border);border-radius:6px;font-family:inherit;min-height:60px;background:var(--card);color:var(--text)"></textarea></div></div></div><div class="modal-footer"><button class="btn" onclick="closeModal('postponeModal')">Отмена</button><button class="btn btn-warning" onclick="confirmPostpone()" style="color:white">⏸ Отложить</button></div></div></div>
 <div class="modal" id="clientModal"><div class="modal-content"><div class="modal-header"><div class="modal-title" id="clientModalTitle">Новый заявитель</div><button class="close-btn" onclick="closeModal('clientModal')">&times;</button></div><div class="modal-body"><form id="clientForm" onsubmit="saveClient(event)"><input type="hidden" id="clientId"><div class="form-group"><label>Имя *</label><input type="text" id="clientName" required></div><div class="form-row"><div class="form-group"><label>Email *</label><input type="email" id="clientEmail" required></div><div class="form-group"><label>Телефон</label><input type="tel" id="clientPhone"></div></div><div class="form-group"><label>Компания</label><select id="clientCompany"></select></div></form></div><div class="modal-footer"><button class="btn" onclick="closeModal('clientModal')">Отмена</button><button class="btn btn-primary" onclick="document.getElementById('clientForm').requestSubmit()">Сохранить</button></div></div></div>
@@ -454,7 +474,7 @@ function processRecurringTickets() {
     createdCount++;
     toast(`🔁 Создан экземпляр ${newInstance.number}`);
   });
-  if (createdCount > 0) { save(); if (document.getElementById('page-tickets').classList.contains('active')) { renderTickets(); if (selectedTicketId) renderTicketDetail(); } if (document.getElementById('page-recurring').classList.contains('active')) renderRecurring(); }
+  if (createdCount > 0) { save(); if (document.getElementById('page-tickets').classList.contains('active')) renderTickets(); if (document.getElementById('page-recurring').classList.contains('active')) renderRecurring(); }
 }
 
 function toggleRecurrenceConfig() { const enabled = document.getElementById('recurrenceEnabled').checked; document.getElementById('recurrenceConfig').classList.toggle('active', enabled); if (enabled && !document.getElementById('recurrenceFirstRun').value) { const d = new Date(Date.now() + 3600000); document.getElementById('recurrenceFirstRun').value = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); } }
@@ -462,7 +482,7 @@ function setRecurrencePreset(period, interval) { document.getElementById('recurr
 
 function checkAuth() { if (state.session && state.session.userId && getUser(state.session.userId)) { CURRENT_USER_ID = state.session.userId; showApp(); } else { showLogin(); } }
 function showLogin() { document.getElementById('loginScreen').style.display = 'flex'; document.getElementById('appSidebar').style.display = 'none'; document.getElementById('appMain').style.display = 'none'; renderUserPicker(); renderRegDepartments(); }
-function showApp() { document.getElementById('loginScreen').style.display = 'none'; document.getElementById('appSidebar').style.display = ''; document.getElementById('appMain').style.display = ''; applyPermissions(); renderCurrentUser(); renderTickets(); renderTicketDetail(); }
+function showApp() { document.getElementById('loginScreen').style.display = 'none'; document.getElementById('appSidebar').style.display = ''; document.getElementById('appMain').style.display = ''; applyPermissions(); renderCurrentUser(); renderTickets(); }
 function applyPermissions() { const admin = isAdmin(); document.querySelectorAll('.admin-only').forEach(el => { el.style.display = admin ? '' : 'none'; }); }
 function renderCurrentUser() { const u = getCurrentUser(); if (!u) return; const dep = getDepartment(u.departmentId); document.getElementById('currentUserName').textContent = u.fullName; document.getElementById('currentUserRole').textContent = (dep ? dep.name + ' • ' : '') + ROLE_LABELS[u.role]; document.getElementById('currentUserAvatar').textContent = getInitials(u.fullName); }
 
@@ -480,25 +500,21 @@ function doRegister() { hideLoginError('registerError'); const fullName = docume
 function doLogout() { if (!confirm('Выйти из системы?')) return; state.session = null; CURRENT_USER_ID = null; selectedLoginUserId = null; selectedTicketId = null; save(); document.getElementById('loginPin').value = ''; showLogin(); }
 function renderRegDepartments() { document.getElementById('regDepartment').innerHTML = '<option value="">— Выберите отдел —</option>' + state.departments.map(d => `<option value="${d.id}">${d.name}</option>`).join(''); }
 document.addEventListener('input', e => { if (e.target.classList && e.target.classList.contains('pin-input')) { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4); } });
-document.addEventListener('keydown', e => { if (e.key === 'Enter' && document.getElementById('loginScreen').style.display !== 'none') { if (document.getElementById('loginForm').classList.contains('active')) doLogin(); else if (document.getElementById('registerForm').classList.contains('active')) doRegister(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && document.getElementById('loginScreen').style.display !== 'none') { if (document.getElementById('loginForm').classList.contains('active')) doLogin(); else if (document.getElementById('registerForm').classList.contains('active')) doRegister(); } if (e.key === 'Escape' && document.getElementById('ticketViewModal')?.classList.contains('active')) { closeTicketModal(); } });
 
 document.querySelectorAll('.nav-item').forEach(item => { item.addEventListener('click', () => { document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); item.classList.add('active'); const page = item.dataset.page; document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); document.getElementById('page-' + page).classList.add('active'); if (page === 'dashboard') renderDashboard(); if (page === 'clients') renderClients(); if (page === 'companies') renderCompanies(); if (page === 'staff') renderStaff(); if (page === 'reports') renderReports(); if (page === 'tickets') renderTickets(); if (page === 'recurring') renderRecurring(); if (page === 'departments') renderDepartments(); if (page === 'users') renderUsers(); if (page === 'settings') renderSettings(); }); });
 
 document.querySelectorAll('.filter-tab').forEach(tab => { tab.addEventListener('click', () => { document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active')); tab.classList.add('active'); currentFilter = tab.dataset.filter; renderTickets(); }); });
 
-// ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ: сохраняет и восстанавливает выбранные значения фильтров
 function populateFilters() {
     const currentCategory = document.getElementById('filterCategory').value;
     const currentAssignee = document.getElementById('filterAssignee').value;
     const currentDepartment = document.getElementById('filterDepartment') ? document.getElementById('filterDepartment').value : '';
-
     document.getElementById('filterCategory').innerHTML = '<option value="">Категория</option>' + state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
     document.getElementById('filterCategory').value = currentCategory;
-
     const assignees = isAdmin() ? state.users : state.users.filter(u => u.id === CURRENT_USER_ID);
     document.getElementById('filterAssignee').innerHTML = '<option value="">Исполнитель</option><option value="unassigned">Неназначенные</option>' + assignees.map(u => `<option value="${u.id}">${u.fullName}</option>`).join('');
     document.getElementById('filterAssignee').value = currentAssignee;
-
     if (isAdmin() && document.getElementById('filterDepartment')) {
         document.getElementById('filterDepartment').innerHTML = '<option value="">Все отделы</option>' + state.departments.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
         document.getElementById('filterDepartment').value = currentDepartment;
@@ -507,7 +523,6 @@ function populateFilters() {
 
 function getVisibleTickets() { if (isAdmin()) return state.tickets; else return state.tickets.filter(t => t.assigneeId === CURRENT_USER_ID); }
 
-// ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ: безопасная проверка отдела
 function filterTickets() {
     const search = document.getElementById('globalSearch').value.toLowerCase();
     const priority = document.getElementById('filterPriority').value;
@@ -515,22 +530,15 @@ function filterTickets() {
     const assignee = document.getElementById('filterAssignee').value;
     const deptEl = document.getElementById('filterDepartment');
     const department = (isAdmin() && deptEl) ? deptEl.value : '';
-
     let filtered = getVisibleTickets();
-
     filtered = filtered.filter(t => {
         const client = getClient(t.clientId);
         const matchSearch = !search || t.subject.toLowerCase().includes(search) || t.number.toLowerCase().includes(search) || (client && client.name.toLowerCase().includes(search));
         const matchPriority = !priority || t.priority === priority;
         const matchCategory = !category || t.category === category;
         const matchAssignee = !assignee || (assignee === 'unassigned' ? !t.assigneeId : t.assigneeId === assignee);
-
         let matchDepartment = true;
-        if (department) {
-            const assigneeUser = getUser(t.assigneeId);
-            matchDepartment = assigneeUser && assigneeUser.departmentId === department;
-        }
-
+        if (department) { const assigneeUser = getUser(t.assigneeId); matchDepartment = assigneeUser && assigneeUser.departmentId === department; }
         let matchFilter = true;
         if (currentFilter === 'mine') matchFilter = t.assigneeId === CURRENT_USER_ID;
         else if (currentFilter === 'unassigned') matchFilter = !t.assigneeId;
@@ -539,7 +547,6 @@ function filterTickets() {
         else if (currentFilter === 'pending') matchFilter = t.status === 'pending';
         else if (currentFilter === 'solved') matchFilter = t.status === 'solved' || t.status === 'closed';
         else if (currentFilter === 'recurring') matchFilter = t.recurrence && t.recurrence.enabled;
-        
         return matchSearch && matchPriority && matchCategory && matchAssignee && matchDepartment && matchFilter;
     });
     filtered.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
@@ -548,26 +555,226 @@ function filterTickets() {
 
 function updateCounts() { const visible = getVisibleTickets(); document.getElementById('countAll').textContent = visible.length; document.getElementById('countMine').textContent = visible.filter(t => t.assigneeId === CURRENT_USER_ID && !['solved','closed'].includes(t.status)).length; document.getElementById('countUnassigned').textContent = visible.filter(t => !t.assigneeId && !['solved','closed'].includes(t.status)).length; document.getElementById('countNew').textContent = visible.filter(t => t.status === 'new').length; document.getElementById('countOpen').textContent = visible.filter(t => t.status === 'open').length; document.getElementById('countPending').textContent = visible.filter(t => t.status === 'pending').length; document.getElementById('countSolved').textContent = visible.filter(t => t.status === 'solved' || t.status === 'closed').length; const recurringCount = visible.filter(t => t.recurrence && t.recurrence.enabled).length; document.getElementById('countRecurring').textContent = recurringCount; document.getElementById('navBadgeRecurring').textContent = recurringCount; document.getElementById('navBadgeTickets').textContent = visible.filter(t => t.status === 'new' || t.status === 'open').length; }
 
-function renderTickets() { updateCounts(); populateFilters(); const filtered = filterTickets(); const list = document.getElementById('ticketsList'); if (filtered.length === 0) { const msg = isAdmin() ? 'Нет заявок' : 'Нет назначенных вам заявок'; list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><p>${msg}</p></div>`; return; } list.innerHTML = filtered.map(t => { const client = getClient(t.clientId); const cat = getCategory(t.category); const assignee = getUser(t.assigneeId); const dep = assignee ? getDepartment(assignee.departmentId) : null; const lastComment = t.comments[t.comments.length - 1]; const preview = lastComment ? lastComment.text : t.description; const isRecurringTemplate = t.recurrence && t.recurrence.enabled; const isRecurringInstance = t.recurringParentId; return `<div class="ticket-item ${t.id === selectedTicketId ? 'active' : ''} ${isRecurringTemplate ? 'is-recurring-template' : ''}" onclick="selectTicket('${t.id}')"><div class="ticket-priority-bar priority-${t.priority}"></div><div class="ticket-content"><div class="ticket-header"><span class="ticket-number">${isRecurringTemplate?'🔁 ':''}${isRecurringInstance?'📄 ':''}${t.number}</span><span class="ticket-time">${formatDate(t.updatedAt)}</span></div><div class="ticket-subject">${t.subject}</div><div class="ticket-preview">${preview}</div><div class="ticket-meta"><span class="badge-status status-${t.status}">${STATUS_LABELS[t.status]}</span>${cat ? `<span style="font-size:10px;color:${cat.color}">● ${cat.name}</span>` : ''}${isRecurringTemplate ? `<span class="recurring-indicator" title="${formatRecurrence(t.recurrence)}">🔁 ${formatRecurrence(t.recurrence)}</span>` : ''}${isRecurringInstance ? `<span class="recurring-indicator" style="background:#f3e8ff;color:#6b21a8">📄 Экземпляр</span>` : ''}${assignee ? `<span style="font-size:10px;color:var(--text-light)">🧑‍💼 ${assignee.fullName.split(' ')[0]}${dep ? ` <span class="dept-badge" style="background:${dep.color}22;color:${dep.color}">${dep.name}</span>` : ''}</span>` : '<span style="font-size:10px;color:var(--warning)">⚠ Не назначен</span>'}${client ? `<span style="font-size:10px;color:var(--text-light)">👤 ${client.name}</span>` : ''}</div></div></div>`; }).join(''); }
+function renderTickets() { updateCounts(); populateFilters(); const filtered = filterTickets(); const list = document.getElementById('ticketsList'); if (filtered.length === 0) { const msg = isAdmin() ? 'Нет заявок' : 'Нет назначенных вам заявок'; list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><p>${msg}</p></div>`; return; } list.innerHTML = filtered.map(t => { const client = getClient(t.clientId); const cat = getCategory(t.category); const assignee = getUser(t.assigneeId); const dep = assignee ? getDepartment(assignee.departmentId) : null; const lastComment = t.comments[t.comments.length - 1]; const preview = lastComment ? lastComment.text : t.description; const isRecurringTemplate = t.recurrence && t.recurrence.enabled; const isRecurringInstance = t.recurringParentId; return `<div class="ticket-item ${isRecurringTemplate ? 'is-recurring-template' : ''}" onclick="selectTicket('${t.id}')"><div class="ticket-priority-bar priority-${t.priority}"></div><div class="ticket-content"><div class="ticket-header"><span class="ticket-number">${isRecurringTemplate?'🔁 ':''}${isRecurringInstance?'📄 ':''}${t.number}</span><span class="ticket-time">${formatDate(t.updatedAt)}</span></div><div class="ticket-subject">${t.subject}</div><div class="ticket-preview">${preview}</div><div class="ticket-meta"><span class="badge-status status-${t.status}">${STATUS_LABELS[t.status]}</span>${cat ? `<span style="font-size:10px;color:${cat.color}">● ${cat.name}</span>` : ''}${isRecurringTemplate ? `<span class="recurring-indicator">🔁 ${formatRecurrence(t.recurrence)}</span>` : ''}${isRecurringInstance ? `<span class="recurring-indicator" style="background:#f3e8ff;color:#6b21a8">📄 Экземпляр</span>` : ''}${assignee ? `<span style="font-size:10px;color:var(--text-light)">🧑‍💼 ${assignee.fullName.split(' ')[0]}${dep ? ` <span class="dept-badge" style="background:${dep.color}22;color:${dep.color}">${dep.name}</span>` : ''}</span>` : '<span style="font-size:10px;color:var(--warning)">⚠ Не назначен</span>'}${client ? `<span style="font-size:10px;color:var(--text-light)">👤 ${client.name}</span>` : ''}</div></div></div>`; }).join(''); }
 
-function selectTicket(id) { const t = state.tickets.find(x => x.id === id); if (!t) return; if (!isAdmin() && t.assigneeId !== CURRENT_USER_ID) { toast('У вас нет доступа к этой заявке', 'error'); return; } selectedTicketId = id; renderTickets(); renderTicketDetail(); }
+function selectTicket(id) {
+    const t = state.tickets.find(x => x.id === id);
+    if (!t) return;
+    if (!isAdmin() && t.assigneeId !== CURRENT_USER_ID) { toast('У вас нет доступа к этой заявке', 'error'); return; }
+    selectedTicketId = id;
+    openTicketViewModal(t);
+}
 
-function renderTicketDetail() { const panel = document.getElementById('ticketDetail'); const t = state.tickets.find(x => x.id === selectedTicketId); if (!t) { panel.innerHTML = `<div class="ticket-detail-empty"><div class="empty-icon">📥</div><h3>Выберите заявку</h3></div>`; return; } if (!isAdmin() && t.assigneeId !== CURRENT_USER_ID) { panel.innerHTML = `<div class="ticket-detail-empty"><div class="empty-icon">🔒</div><h3>Нет доступа</h3><p style="margin-top:8px">Эта заявка назначена другому сотруднику</p></div>`; return; } const client = getClient(t.clientId); const assignee = getUser(t.assigneeId); const cat = getCategory(t.category); const company = client && client.companyId ? getCompany(client.companyId) : null; const isResolved = t.status === 'solved' || t.status === 'closed'; const isPending = t.status === 'pending'; const isRecurringTemplate = t.recurrence && t.recurrence.enabled; const isRecurringInstance = t.recurringParentId; const parentTicket = isRecurringInstance ? state.tickets.find(x => x.id === t.recurringParentId) : null; let bannerHtml = ''; if (isResolved) bannerHtml = `<div class="resolved-banner"><div class="resolved-banner-icon">✅</div><div class="resolved-banner-info"><div class="resolved-banner-title">Заявка решена</div><div class="resolved-banner-sub">${t.resolvedAt ? formatDateTime(t.resolvedAt) : ''}</div></div><button class="btn btn-small btn-info" onclick="reopenTicket('${t.id}')">🔓 Открыть заново</button></div>`; else if (isPending && t.dueAt) bannerHtml = `<div class="postponed-banner"><div class="postponed-banner-icon">⏸️</div><div class="postponed-banner-info"><div class="resolved-banner-title">Отложена</div><div class="resolved-banner-sub">Вернуться: <strong>${formatDateTime(t.dueAt)}</strong>${t.postponeReason ? ' • ' + t.postponeReason : ''}</div></div><button class="btn btn-small btn-resolve" onclick="resolveTicket('${t.id}')" style="margin-right:5px">✓ Решить</button><button class="btn btn-small btn-postpone" onclick="openPostponeModal('${t.id}')" style="color:white">⏸ Изменить</button></div>`; if (isRecurringTemplate) { const rec = t.recurrence; const limits = []; if (rec.endDate) limits.push('до ' + formatDateTime(rec.endDate)); if (rec.maxCount) limits.push(`макс. ${rec.maxCount} шт`); bannerHtml += `<div class="recurring-banner"><div class="recurring-banner-icon">🔁</div><div class="recurring-banner-info"><div class="recurring-banner-title">Повторяющаяся заявка (шаблон)</div><div class="recurring-banner-sub">${formatRecurrence(rec)} • Создано экземпляров: <strong>${rec.currentCount || 0}</strong>${rec.nextRunAt ? ` • Следующее: <strong>${formatDateTime(rec.nextRunAt)}</strong>` : ''}${limits.length ? ' • ' + limits.join(', ') : ''}</div></div><button class="btn btn-small" onclick="toggleRecurrence('${t.id}')" style="background:white;color:#6b21a8;border:1px solid #c4b5fd">${rec.enabled ? '⏸ Пауза' : '▶ Старт'}</button></div>`; } if (isRecurringInstance && parentTicket) bannerHtml += `<div class="recurring-instance-banner"><span style="font-size:18px">📄</span><div style="flex:1"><div style="font-weight:600">Это экземпляр повторяющейся заявки</div><div style="font-size:11px;opacity:0.9;margin-top:2px">Шаблон: <a href="#" onclick="event.preventDefault();selectTicket('${parentTicket.id}')" style="color:inherit;font-weight:600;text-decoration:underline">${parentTicket.number} — ${parentTicket.subject}</a></div></div></div>`; const messagesHtml = t.comments.map(c => { let authorName = '', cls = ''; if (c.authorType === 'system') { authorName = '🤖 Система'; cls = 'message-system'; } else if (c.authorType === 'client') { const cl = getClient(c.authorId); authorName = cl ? cl.name : 'Заявитель'; cls = 'message-client'; } else { const u = getUser(c.authorId); authorName = u ? u.fullName : 'Исполнитель'; cls = 'message-agent'; } return `<div class="message ${cls}"><div class="message-header"><span class="message-author">${authorName}</span><span class="message-time">${formatDateTime(c.createdAt)}</span></div><div class="message-body">${c.text}</div></div>`; }).join(''); panel.innerHTML = `<div class="ticket-detail">${bannerHtml}<div class="ticket-detail-header"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap"><span style="font-size:12px;color:var(--text-muted);font-family:monospace">${t.number}</span><span class="badge-status status-${t.status}">${STATUS_LABELS[t.status]}</span><span class="badge-priority" style="background:${t.priority==='urgent'?'#fee2e2':t.priority==='high'?'#fef3c7':t.priority==='medium'?'#d1fae5':'#f3f4f6'};color:${t.priority==='urgent'?'#991b1b':t.priority==='high'?'#92400e':t.priority==='medium'?'#065f46':'#374151'};padding:1px 7px;border-radius:8px;font-size:10px">${PRIORITY_LABELS[t.priority]}</span>${isRecurringTemplate ? `<span class="recurring-indicator">🔁 Шаблон</span>` : ''}${isRecurringInstance ? `<span class="recurring-indicator" style="background:#f3e8ff;color:#6b21a8">📄 Экземпляр</span>` : ''}</div><div class="ticket-detail-title">${t.subject}</div><div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--text-light);margin-top:10px"><span>📅 ${formatDateTime(t.createdAt)}</span>${assignee ? `<span>🧑‍💼 ${assignee.fullName}</span>` : '<span style="color:var(--warning)">⚠ Не назначен</span>'}</div>${!isResolved ? `<div class="ticket-action-bar"><button class="btn-resolve" onclick="resolveTicket('${t.id}')">✅ Отметить как решённую</button><button class="btn-postpone" onclick="openPostponeModal('${t.id}')" style="color:white">⏸ Отложить</button></div>` : ''}</div><div class="ticket-detail-body"><div class="conversation"><div class="conversation-title">💬 Переписка (${t.comments.length})</div><div class="message message-client"><div class="message-header"><span class="message-author">📩 От ${client ? client.name : 'заявителя'}</span><span class="message-time">${formatDateTime(t.createdAt)}</span></div><div class="message-body">${t.description}</div></div>${messagesHtml}<div class="reply-box"><textarea id="replyText" placeholder="Ответ заявителю..."></textarea><div class="reply-actions"><button class="btn btn-primary" onclick="sendReply()">Отправить</button></div></div></div><div class="ticket-sidebar"><div class="info-card"><div class="info-card-title">Заявитель</div>${client ? `<div class="client-card"><div class="client-avatar">${getInitials(client.name)}</div><div class="client-info"><div class="client-name">${client.name}</div><div class="client-email">${client.email}</div>${client.phone ? `<div class="client-email">${client.phone}</div>` : ''}</div></div>${company ? `<div style="font-size:11px;color:var(--text-light);margin-top:5px">🏢 ${company.name}</div>` : ''}` : '<div style="color:var(--text-muted);font-size:12px">Не указан</div>'}</div><div class="info-card"><div class="info-card-title">Свойства</div><div class="info-row"><span class="info-row-label">Статус</span><select onchange="updateTicketField('${t.id}','status',this.value)">${Object.entries(STATUS_LABELS).map(([k,v]) => `<option value="${k}" ${t.status===k?'selected':''}>${v}</option>`).join('')}</select></div><div class="info-row"><span class="info-row-label">Приоритет</span><select onchange="updateTicketField('${t.id}','priority',this.value)">${Object.entries(PRIORITY_LABELS).map(([k,v]) => `<option value="${k}" ${t.priority===k?'selected':''}>${v}</option>`).join('')}</select></div><div class="info-row"><span class="info-row-label">Исполнитель</span><select onchange="updateTicketField('${t.id}','assigneeId',this.value)"><option value="">Не назначен</option>${state.users.map(u => `<option value="${u.id}" ${t.assigneeId===u.id?'selected':''}>${u.fullName}</option>`).join('')}</select></div><div class="info-row"><span class="info-row-label">Категория</span><select onchange="updateTicketField('${t.id}','category',this.value)">${state.categories.map(c => `<option value="${c.id}" ${t.category===c.id?'selected':''}>${c.name}</option>`).join('')}</select></div></div>${isRecurringTemplate ? `<div class="info-card" style="background:linear-gradient(135deg, #f5f3ff, #ede9fe);border-color:#c4b5fd"><div class="info-card-title" style="color:#6b21a8">🔁 Повторение</div><div style="font-size:12px;color:#6b21a8"><div style="margin-bottom:5px"><strong>${formatRecurrence(t.recurrence)}</strong></div><div style="font-size:11px;opacity:0.8"><div>Создано: ${t.recurrence.currentCount || 0} экз.</div>${t.recurrence.lastRunAt ? `<div>Последний: ${formatDateTime(t.recurrence.lastRunAt)}</div>` : ''}${t.recurrence.nextRunAt ? `<div>Следующий: ${formatDateTime(t.recurrence.nextRunAt)}</div>` : ''}</div></div></div>` : ''}</div></div></div>`; }
+function openTicketViewModal(t) {
+    const client = getClient(t.clientId);
+    const assignee = getUser(t.assigneeId);
+    const cat = getCategory(t.category);
+    const company = client && client.companyId ? getCompany(client.companyId) : null;
+    const isResolved = t.status === 'solved' || t.status === 'closed';
+    const isPending = t.status === 'pending';
+    const isRecurringTemplate = t.recurrence && t.recurrence.enabled;
+    const isRecurringInstance = t.recurringParentId;
+    const parentTicket = isRecurringInstance ? state.tickets.find(x => x.id === t.recurringParentId) : null;
 
-function resolveTicket(id) { const t = state.tickets.find(x => x.id === id); if (!t || t.status === 'solved' || t.status === 'closed') return; t.status = 'solved'; t.resolvedAt = new Date().toISOString(); t.updatedAt = new Date().toISOString(); t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: '✅ Заявка отмечена как решённая', createdAt: new Date().toISOString() }); save(); toast('✅ Заявка решена'); renderTickets(); renderTicketDetail(); }
-function reopenTicket(id) { const t = state.tickets.find(x => x.id === id); if (!t) return; t.status = 'open'; t.resolvedAt = null; t.updatedAt = new Date().toISOString(); t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: '🔓 Заявка открыта заново', createdAt: new Date().toISOString() }); save(); toast('🔓 Заявка открыта заново'); renderTickets(); renderTicketDetail(); }
-function openPostponeModal(id) { const t = state.tickets.find(x => x.id === id); if (!t) return; postponeTicketId = id; const tomorrow = new Date(Date.now() + 86400000); document.getElementById('postponeDate').value = t.dueAt ? t.dueAt.slice(0, 16) : new Date(tomorrow.getTime() - tomorrow.getTimezoneOffset() * 60000).toISOString().slice(0, 16); document.getElementById('postponeReason').value = t.postponeReason || ''; openModal('postponeModal'); }
+    let headerHtml = `
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+            <span style="font-size:12px;color:var(--text-muted);font-family:monospace">${t.number}</span>
+            <span class="badge-status status-${t.status}">${STATUS_LABELS[t.status]}</span>
+            <span class="badge-priority" style="background:${t.priority==='urgent'?'#fee2e2':t.priority==='high'?'#fef3c7':t.priority==='medium'?'#d1fae5':'#f3f4f6'};color:${t.priority==='urgent'?'#991b1b':t.priority==='high'?'#92400e':t.priority==='medium'?'#065f46':'#374151'};padding:1px 7px;border-radius:8px;font-size:10px">${PRIORITY_LABELS[t.priority]}</span>
+            ${isRecurringTemplate ? `<span class="recurring-indicator">🔁 Шаблон</span>` : ''}
+            ${isRecurringInstance ? `<span class="recurring-indicator" style="background:#f3e8ff;color:#6b21a8">📄 Экземпляр</span>` : ''}
+        </div>
+        <div style="font-size:18px;font-weight:600;margin-bottom:8px">${t.subject}</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--text-light)">
+            <span>📅 ${formatDateTime(t.createdAt)}</span>
+            ${assignee ? `<span>🧑‍💼 ${assignee.fullName}</span>` : '<span style="color:var(--warning)">⚠ Не назначен</span>'}
+            ${cat ? `<span style="color:${cat.color}">● ${cat.name}</span>` : ''}
+        </div>
+    `;
+    document.getElementById('ticketModalHeaderContent').innerHTML = headerHtml;
+
+    let actionsHtml = '';
+    if (!isResolved) {
+        actionsHtml += `<button class="btn btn-resolve" onclick="resolveTicketFromModal('${t.id}')">✅ Выполнено</button>`;
+        actionsHtml += `<button class="btn btn-postpone" onclick="openPostponeModal('${t.id}')" style="color:white">⏸ Отложить</button>`;
+    } else {
+        actionsHtml += `<button class="btn btn-info btn-small" onclick="reopenTicketFromModal('${t.id}')">🔓 Открыть заново</button>`;
+    }
+    if (isAdmin()) {
+        actionsHtml += `<button class="btn btn-danger btn-small" onclick="deleteTicketFromModal('${t.id}')">🗑️ Удалить</button>`;
+    }
+    document.getElementById('ticketModalActions').innerHTML = actionsHtml;
+
+    let bannerHtml = '';
+    if (isResolved) {
+        bannerHtml = `<div class="resolved-banner" style="grid-column:1/-1"><div class="resolved-banner-icon">✅</div><div class="resolved-banner-info"><div class="resolved-banner-title">Заявка решена</div><div class="resolved-banner-sub">${t.resolvedAt ? formatDateTime(t.resolvedAt) : ''}</div></div></div>`;
+    } else if (isPending && t.dueAt) {
+        bannerHtml = `<div class="postponed-banner" style="grid-column:1/-1"><div class="postponed-banner-icon">⏸️</div><div class="postponed-banner-info"><div class="resolved-banner-title">Отложена</div><div class="resolved-banner-sub">Вернуться: <strong>${formatDateTime(t.dueAt)}</strong>${t.postponeReason ? ' • ' + t.postponeReason : ''}</div></div></div>`;
+    }
+    if (isRecurringTemplate) {
+        const rec = t.recurrence;
+        bannerHtml += `<div class="recurring-banner" style="grid-column:1/-1"><div class="recurring-banner-icon">🔁</div><div class="recurring-banner-info"><div class="recurring-banner-title">Повторяющаяся заявка</div><div class="recurring-banner-sub">${formatRecurrence(rec)} • Создано: <strong>${rec.currentCount || 0}</strong> экз.${rec.nextRunAt ? ` • Следующее: ${formatDateTime(rec.nextRunAt)}` : ''}</div></div></div>`;
+    }
+    if (isRecurringInstance && parentTicket) {
+        bannerHtml += `<div class="recurring-instance-banner" style="grid-column:1/-1"><span style="font-size:18px">📄</span><div style="flex:1"><div style="font-weight:600">Экземпляр повторяющейся заявки</div><div style="font-size:11px;opacity:0.9">Шаблон: <strong>${parentTicket.number} — ${parentTicket.subject}</strong></div></div></div>`;
+    }
+
+    const messagesHtml = t.comments.map(c => {
+        let authorName = '', cls = '';
+        if (c.authorType === 'system') { authorName = '🤖 Система'; cls = 'message-system'; }
+        else if (c.authorType === 'client') { const cl = getClient(c.authorId); authorName = cl ? cl.name : 'Заявитель'; cls = 'message-client'; }
+        else { const u = getUser(c.authorId); authorName = u ? u.fullName : 'Исполнитель'; cls = 'message-agent'; }
+        return `<div class="message ${cls}"><div class="message-header"><span class="message-author">${authorName}</span><span class="message-time">${formatDateTime(c.createdAt)}</span></div><div class="message-body">${c.text}</div></div>`;
+    }).join('');
+
+    const bodyHtml = `
+        ${bannerHtml}
+        <div>
+            <div class="conversation">
+                <div class="conversation-title">💬 Переписка (${t.comments.length})</div>
+                <div class="message message-client">
+                    <div class="message-header"><span class="message-author">📩 От ${client ? client.name : 'заявителя'}</span><span class="message-time">${formatDateTime(t.createdAt)}</span></div>
+                    <div class="message-body">${t.description}</div>
+                </div>
+                ${messagesHtml}
+                ${!isResolved ? `
+                <div class="reply-box">
+                    <textarea id="replyText" placeholder="Ответ заявителю..."></textarea>
+                    <div class="reply-actions"><button class="btn btn-primary" onclick="sendReplyFromModal('${t.id}')">Отправить</button></div>
+                </div>` : ''}
+            </div>
+        </div>
+        <div>
+            <div class="info-card" style="margin-bottom:12px">
+                <div class="info-card-title">Заявитель</div>
+                ${client ? `<div class="client-card"><div class="client-avatar">${getInitials(client.name)}</div><div class="client-info"><div class="client-name">${client.name}</div><div class="client-email">${client.email}</div>${client.phone ? `<div class="client-email">${client.phone}</div>` : ''}</div></div>${company ? `<div style="font-size:11px;color:var(--text-light);margin-top:5px">🏢 ${company.name}</div>` : ''}` : '<div style="color:var(--text-muted);font-size:12px">Не указан</div>'}
+            </div>
+            <div class="info-card">
+                <div class="info-card-title">Свойства</div>
+                <div class="info-row"><span class="info-row-label">Статус</span><select onchange="updateTicketField('${t.id}','status',this.value);refreshTicketModal()">${Object.entries(STATUS_LABELS).map(([k,v]) => `<option value="${k}" ${t.status===k?'selected':''}>${v}</option>`).join('')}</select></div>
+                <div class="info-row"><span class="info-row-label">Приоритет</span><select onchange="updateTicketField('${t.id}','priority',this.value);refreshTicketModal()">${Object.entries(PRIORITY_LABELS).map(([k,v]) => `<option value="${k}" ${t.priority===k?'selected':''}>${v}</option>`).join('')}</select></div>
+                <div class="info-row"><span class="info-row-label">Исполнитель</span><select onchange="updateTicketField('${t.id}','assigneeId',this.value);refreshTicketModal()"><option value="">Не назначен</option>${state.users.map(u => `<option value="${u.id}" ${t.assigneeId===u.id?'selected':''}>${u.fullName}</option>`).join('')}</select></div>
+                <div class="info-row"><span class="info-row-label">Категория</span><select onchange="updateTicketField('${t.id}','category',this.value);refreshTicketModal()">${state.categories.map(c => `<option value="${c.id}" ${t.category===c.id?'selected':''}>${c.name}</option>`).join('')}</select></div>
+            </div>
+            ${isRecurringTemplate ? `
+            <div class="info-card" style="margin-top:12px;background:linear-gradient(135deg, #f5f3ff, #ede9fe);border-color:#c4b5fd">
+                <div class="info-card-title" style="color:#6b21a8">🔁 Повторение</div>
+                <div style="font-size:12px;color:#6b21a8">
+                    <div style="margin-bottom:5px"><strong>${formatRecurrence(t.recurrence)}</strong></div>
+                    <div style="font-size:11px;opacity:0.8">
+                        <div>Создано: ${t.recurrence.currentCount || 0} экз.</div>
+                        ${t.recurrence.nextRunAt ? `<div>Следующий: ${formatDateTime(t.recurrence.nextRunAt)}</div>` : ''}
+                    </div>
+                </div>
+            </div>` : ''}
+        </div>
+    `;
+    document.getElementById('ticketModalBody').innerHTML = bodyHtml;
+    openModal('ticketViewModal');
+}
+
+function closeTicketModal() {
+    closeModal('ticketViewModal');
+    selectedTicketId = null;
+    renderTickets();
+}
+
+function refreshTicketModal() {
+    const t = state.tickets.find(x => x.id === selectedTicketId);
+    if (t) openTicketViewModal(t);
+    renderTickets();
+}
+
+function resolveTicketFromModal(id) {
+    const t = state.tickets.find(x => x.id === id);
+    if (!t || t.status === 'solved' || t.status === 'closed') return;
+    t.status = 'solved';
+    t.resolvedAt = new Date().toISOString();
+    t.updatedAt = new Date().toISOString();
+    t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: '✅ Заявка отмечена как решённая', createdAt: new Date().toISOString() });
+    save();
+    toast('✅ Заявка решена');
+    closeTicketModal();
+}
+
+function reopenTicketFromModal(id) {
+    const t = state.tickets.find(x => x.id === id);
+    if (!t) return;
+    t.status = 'open';
+    t.resolvedAt = null;
+    t.updatedAt = new Date().toISOString();
+    t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: '🔓 Заявка открыта заново', createdAt: new Date().toISOString() });
+    save();
+    toast('🔓 Заявка открыта заново');
+    refreshTicketModal();
+}
+
+function deleteTicketFromModal(id) {
+    if (!isAdmin()) return;
+    if (!confirm('Удалить заявку? Это действие необратимо.')) return;
+    state.tickets = state.tickets.filter(t => t.id !== id);
+    save();
+    toast('Заявка удалена');
+    closeTicketModal();
+}
+
+function sendReplyFromModal(ticketId) {
+    const text = document.getElementById('replyText').value.trim();
+    if (!text) { toast('Введите текст', 'error'); return; }
+    const t = state.tickets.find(x => x.id === ticketId);
+    if (!t) return;
+    t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text, createdAt: new Date().toISOString() });
+    t.updatedAt = new Date().toISOString();
+    if (t.status === 'new') t.status = 'open';
+    save();
+    toast('Ответ отправлен');
+    refreshTicketModal();
+}
+
+function resolveTicket(id) {
+    const t = state.tickets.find(x => x.id === id);
+    if (!t || t.status === 'solved' || t.status === 'closed') return;
+    t.status = 'solved';
+    t.resolvedAt = new Date().toISOString();
+    t.updatedAt = new Date().toISOString();
+    t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: '✅ Заявка отмечена как решённая', createdAt: new Date().toISOString() });
+    save();
+    toast('✅ Заявка решена');
+    renderTickets();
+}
+
+function reopenTicket(id) {
+    const t = state.tickets.find(x => x.id === id);
+    if (!t) return;
+    t.status = 'open';
+    t.resolvedAt = null;
+    t.updatedAt = new Date().toISOString();
+    t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: '🔓 Заявка открыта заново', createdAt: new Date().toISOString() });
+    save();
+    toast('🔓 Заявка открыта заново');
+    renderTickets();
+}
+
+function openPostponeModal(id) {
+    const t = state.tickets.find(x => x.id === id);
+    if (!t) return;
+    postponeTicketId = id;
+    const tomorrow = new Date(Date.now() + 86400000);
+    document.getElementById('postponeDate').value = t.dueAt ? t.dueAt.slice(0, 16) : new Date(tomorrow.getTime() - tomorrow.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    document.getElementById('postponeReason').value = t.postponeReason || '';
+    openModal('postponeModal');
+}
+
 function setPostponePreset(hours) { const d = new Date(Date.now() + hours * 3600000); document.getElementById('postponeDate').value = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); }
-function confirmPostpone() { const dateValue = document.getElementById('postponeDate').value; if (!dateValue) { toast('Укажите дату', 'error'); return; } const t = state.tickets.find(x => x.id === postponeTicketId); if (!t) return; const reason = document.getElementById('postponeReason').value.trim(); const dueDate = new Date(dateValue); t.status = 'pending'; t.dueAt = dueDate.toISOString(); t.postponeReason = reason; t.updatedAt = new Date().toISOString(); t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: `⏸ Заявка отложена до ${formatDateTime(dueDate.toISOString())}${reason ? '\nПричина: ' + reason : ''}`, createdAt: new Date().toISOString() }); save(); closeModal('postponeModal'); toast('⏸ Заявка отложена'); renderTickets(); renderTicketDetail(); }
-function sendReply() { const text = document.getElementById('replyText').value.trim(); if (!text) { toast('Введите текст', 'error'); return; } const t = state.tickets.find(x => x.id === selectedTicketId); if (!t) return; t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text, createdAt: new Date().toISOString() }); t.updatedAt = new Date().toISOString(); if (t.status === 'new') t.status = 'open'; save(); toast('Ответ отправлен'); renderTicketDetail(); renderTickets(); }
-function updateTicketField(id, field, value) { const t = state.tickets.find(x => x.id === id); if (!t) return; t[field] = value; t.updatedAt = new Date().toISOString(); if (field === 'status') { if ((value === 'solved' || value === 'closed') && !t.resolvedAt) t.resolvedAt = new Date().toISOString(); if (value !== 'solved' && value !== 'closed') t.resolvedAt = null; } save(); toast('Обновлено'); renderTickets(); renderTicketDetail(); }
-function toggleRecurrence(id) { const t = state.tickets.find(x => x.id === id); if (!t || !t.recurrence) return; t.recurrence.enabled = !t.recurrence.enabled; if (t.recurrence.enabled && !t.recurrence.nextRunAt) t.recurrence.nextRunAt = calculateNextRun(t.recurrence); t.updatedAt = new Date().toISOString(); save(); toast(t.recurrence.enabled ? '🔁 Повторение возобновлено' : '⏸ Повторение приостановлено'); renderTicketDetail(); renderTickets(); if (document.getElementById('page-recurring').classList.contains('active')) renderRecurring(); }
+function confirmPostpone() { const dateValue = document.getElementById('postponeDate').value; if (!dateValue) { toast('Укажите дату', 'error'); return; } const t = state.tickets.find(x => x.id === postponeTicketId); if (!t) return; const reason = document.getElementById('postponeReason').value.trim(); const dueDate = new Date(dateValue); t.status = 'pending'; t.dueAt = dueDate.toISOString(); t.postponeReason = reason; t.updatedAt = new Date().toISOString(); t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: `⏸ Заявка отложена до ${formatDateTime(dueDate.toISOString())}${reason ? '\nПричина: ' + reason : ''}`, createdAt: new Date().toISOString() }); save(); closeModal('postponeModal'); toast('⏸ Заявка отложена'); renderTickets(); if (document.getElementById('ticketViewModal').classList.contains('active')) refreshTicketModal(); }
+function updateTicketField(id, field, value) { const t = state.tickets.find(x => x.id === id); if (!t) return; t[field] = value; t.updatedAt = new Date().toISOString(); if (field === 'status') { if ((value === 'solved' || value === 'closed') && !t.resolvedAt) t.resolvedAt = new Date().toISOString(); if (value !== 'solved' && value !== 'closed') t.resolvedAt = null; } save(); toast('Обновлено'); renderTickets(); }
+function toggleRecurrence(id) { const t = state.tickets.find(x => x.id === id); if (!t || !t.recurrence) return; t.recurrence.enabled = !t.recurrence.enabled; if (t.recurrence.enabled && !t.recurrence.nextRunAt) t.recurrence.nextRunAt = calculateNextRun(t.recurrence); t.updatedAt = new Date().toISOString(); save(); toast(t.recurrence.enabled ? '🔁 Повторение возобновлено' : '⏸ Повторение приостановлено'); renderTickets(); if (document.getElementById('page-recurring').classList.contains('active')) renderRecurring(); if (document.getElementById('ticketViewModal').classList.contains('active')) refreshTicketModal(); }
 
 function openTicketModal() { document.getElementById('ticketForm').reset(); document.getElementById('ticketId').value = ''; document.getElementById('ticketModalTitle').textContent = 'Новая заявка'; document.getElementById('recurrenceEnabled').checked = false; document.getElementById('recurrenceConfig').classList.remove('active'); document.getElementById('recurrenceInterval').value = 1; document.getElementById('recurrencePeriod').value = 'daily'; document.getElementById('recurrenceFirstRun').value = ''; document.getElementById('recurrenceEndDate').value = ''; document.getElementById('recurrenceMaxCount').value = ''; document.querySelectorAll('.recurrence-presets button').forEach(b => b.classList.remove('active')); document.getElementById('ticketClient').innerHTML = '<option value="">Выберите</option>' + state.clients.map(c => `<option value="${c.id}">${c.name}</option>`).join(''); document.getElementById('ticketCategory').innerHTML = state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join(''); const assignees = isAdmin() ? state.users : state.users.filter(u => u.id === CURRENT_USER_ID); document.getElementById('ticketAssignee').innerHTML = '<option value="">Не назначен</option>' + assignees.map(u => `<option value="${u.id}" ${u.id === CURRENT_USER_ID ? 'selected' : ''}>${u.fullName}</option>`).join(''); openModal('ticketModal'); }
 
-function saveTicket(e) { e.preventDefault(); const id = document.getElementById('ticketId').value; let recurrence = null; if (document.getElementById('recurrenceEnabled').checked) { const period = document.getElementById('recurrencePeriod').value; const interval = parseInt(document.getElementById('recurrenceInterval').value) || 1; const firstRun = document.getElementById('recurrenceFirstRun').value; const endDate = document.getElementById('recurrenceEndDate').value; const maxCount = document.getElementById('recurrenceMaxCount').value; if (!firstRun) { toast('Укажите дату первого выполнения', 'error'); return; } const firstRunISO = new Date(firstRun).toISOString(); recurrence = { enabled: true, period, interval, firstRunAt: firstRunISO, nextRunAt: firstRunISO, lastRunAt: null, endDate: endDate ? new Date(endDate).toISOString() : null, maxCount: maxCount ? parseInt(maxCount) : null, currentCount: 0 }; } let assigneeId = document.getElementById('ticketAssignee').value; if (!isAdmin() && !assigneeId) assigneeId = CURRENT_USER_ID; if (!isAdmin() && assigneeId !== CURRENT_USER_ID) { toast('Вы можете назначать заявки только себе', 'error'); return; } const data = { subject: document.getElementById('ticketSubject').value, clientId: document.getElementById('ticketClient').value, category: document.getElementById('ticketCategory').value, priority: document.getElementById('ticketPriority').value, assigneeId, description: document.getElementById('ticketDescription').value, recurrence, updatedAt: new Date().toISOString() }; if (id) { const t = state.tickets.find(x => x.id === id); const oldRecurrence = t.recurrence; Object.assign(t, data); if (oldRecurrence && data.recurrence) { t.recurrence.currentCount = oldRecurrence.currentCount || 0; t.recurrence.lastRunAt = oldRecurrence.lastRunAt; } toast('Заявка обновлена'); } else { const maxNum = state.tickets.reduce((m, t) => Math.max(m, parseInt(t.number.replace('HD-', ''))), 1000); const newT = { id: 't' + Date.now(), number: 'HD-' + (maxNum + 1), ...data, status: 'new', createdAt: new Date().toISOString(), resolvedAt: null, recurringParentId: null, comments: [{ id: 'cm' + Date.now(), authorId: data.clientId, authorType: 'client', text: data.description, createdAt: new Date().toISOString() }], history: [] }; state.tickets.push(newT); selectedTicketId = newT.id; toast(data.recurrence ? '🔁 Повторяющаяся заявка создана' : 'Заявка создана'); } save(); closeModal('ticketModal'); renderTickets(); renderTicketDetail(); }
+function saveTicket(e) { e.preventDefault(); const id = document.getElementById('ticketId').value; let recurrence = null; if (document.getElementById('recurrenceEnabled').checked) { const period = document.getElementById('recurrencePeriod').value; const interval = parseInt(document.getElementById('recurrenceInterval').value) || 1; const firstRun = document.getElementById('recurrenceFirstRun').value; const endDate = document.getElementById('recurrenceEndDate').value; const maxCount = document.getElementById('recurrenceMaxCount').value; if (!firstRun) { toast('Укажите дату первого выполнения', 'error'); return; } const firstRunISO = new Date(firstRun).toISOString(); recurrence = { enabled: true, period, interval, firstRunAt: firstRunISO, nextRunAt: firstRunISO, lastRunAt: null, endDate: endDate ? new Date(endDate).toISOString() : null, maxCount: maxCount ? parseInt(maxCount) : null, currentCount: 0 }; } let assigneeId = document.getElementById('ticketAssignee').value; if (!isAdmin() && !assigneeId) assigneeId = CURRENT_USER_ID; if (!isAdmin() && assigneeId !== CURRENT_USER_ID) { toast('Вы можете назначать заявки только себе', 'error'); return; } const data = { subject: document.getElementById('ticketSubject').value, clientId: document.getElementById('ticketClient').value, category: document.getElementById('ticketCategory').value, priority: document.getElementById('ticketPriority').value, assigneeId, description: document.getElementById('ticketDescription').value, recurrence, updatedAt: new Date().toISOString() }; if (id) { const t = state.tickets.find(x => x.id === id); const oldRecurrence = t.recurrence; Object.assign(t, data); if (oldRecurrence && data.recurrence) { t.recurrence.currentCount = oldRecurrence.currentCount || 0; t.recurrence.lastRunAt = oldRecurrence.lastRunAt; } toast('Заявка обновлена'); } else { const maxNum = state.tickets.reduce((m, t) => Math.max(m, parseInt(t.number.replace('HD-', ''))), 1000); const newT = { id: 't' + Date.now(), number: 'HD-' + (maxNum + 1), ...data, status: 'new', createdAt: new Date().toISOString(), resolvedAt: null, recurringParentId: null, comments: [{ id: 'cm' + Date.now(), authorId: data.clientId, authorType: 'client', text: data.description, createdAt: new Date().toISOString() }], history: [] }; state.tickets.push(newT); selectedTicketId = newT.id; toast(data.recurrence ? '🔁 Повторяющаяся заявка создана' : 'Заявка создана'); } save(); closeModal('ticketModal'); renderTickets(); }
 
-function renderRecurring() { const list = document.getElementById('recurringList'); const templates = state.tickets.filter(t => t.recurrence); if (templates.length === 0) { list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔁</div><p>Нет повторяющихся заявок</p></div>'; return; } list.innerHTML = templates.map(t => { const rec = t.recurrence; const client = getClient(t.clientId); const agent = getUser(t.assigneeId); const dep = agent ? getDepartment(agent.departmentId) : null; const instances = state.tickets.filter(x => x.recurringParentId === t.id).length; return `<div class="card" style="margin-bottom:12px;padding:15px;border-left:3px solid #8b5cf6"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px;flex-wrap:wrap"><div style="flex:1"><div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap"><span style="font-size:18px">🔁</span><strong style="font-size:14px;color:var(--primary-dark)">${t.subject}</strong><span class="badge-status status-${t.status}">${STATUS_LABELS[t.status]}</span>${rec.enabled ? '<span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">АКТИВНО</span>' : '<span style="background:#e5e7eb;color:#374151;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">ПРИОСТАНОВЛЕНО</span>'}</div><div style="font-size:11px;color:var(--text-light);display:flex;gap:12px;flex-wrap:wrap"><span>📋 ${t.number}</span><span>👤 ${client ? client.name : '—'}</span><span>🧑‍💼 ${agent ? agent.fullName : 'Не назначен'}</span>${dep ? `<span class="dept-badge" style="background:${dep.color}22;color:${dep.color}">${dep.name}</span>` : ''}<span>🔁 <strong>${formatRecurrence(rec)}</strong></span><span>📄 Экземпляров: <strong>${rec.currentCount || 0}</strong></span></div><div style="font-size:11px;color:var(--text-light);margin-top:5px">${rec.lastRunAt ? `Последнее: ${formatDateTime(rec.lastRunAt)} • ` : ''}${rec.nextRunAt ? `Следующее: <strong>${formatDateTime(rec.nextRunAt)}</strong>` : ''}</div></div><div style="display:flex;gap:5px;align-items:center"><button class="btn btn-small" onclick="selectTicket('${t.id}');document.querySelector('[data-page=tickets]').click()">👁 Открыть</button><button class="btn btn-small" onclick="toggleRecurrence('${t.id}')">${rec.enabled ? '⏸ Пауза' : '▶ Старт'}</button></div></div></div>`; }).join(''); }
+function renderRecurring() { const list = document.getElementById('recurringList'); const templates = state.tickets.filter(t => t.recurrence); if (templates.length === 0) { list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔁</div><p>Нет повторяющихся заявок</p></div>'; return; } list.innerHTML = templates.map(t => { const rec = t.recurrence; const client = getClient(t.clientId); const agent = getUser(t.assigneeId); const dep = agent ? getDepartment(agent.departmentId) : null; const instances = state.tickets.filter(x => x.recurringParentId === t.id).length; return `<div class="card" style="margin-bottom:12px;padding:15px;border-left:3px solid #8b5cf6"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px;flex-wrap:wrap"><div style="flex:1"><div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap"><span style="font-size:18px">🔁</span><strong style="font-size:14px;color:var(--primary-dark)">${t.subject}</strong><span class="badge-status status-${t.status}">${STATUS_LABELS[t.status]}</span>${rec.enabled ? '<span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">АКТИВНО</span>' : '<span style="background:#e5e7eb;color:#374151;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">ПРИОСТАНОВЛЕНО</span>'}</div><div style="font-size:11px;color:var(--text-light);display:flex;gap:12px;flex-wrap:wrap"><span>📋 ${t.number}</span><span>👤 ${client ? client.name : '—'}</span><span>🧑‍💼 ${agent ? agent.fullName : 'Не назначен'}</span>${dep ? `<span class="dept-badge" style="background:${dep.color}22;color:${dep.color}">${dep.name}</span>` : ''}<span>🔁 <strong>${formatRecurrence(rec)}</strong></span><span>📄 Экземпляров: <strong>${rec.currentCount || 0}</strong></span></div><div style="font-size:11px;color:var(--text-light);margin-top:5px">${rec.lastRunAt ? `Последнее: ${formatDateTime(rec.lastRunAt)} • ` : ''}${rec.nextRunAt ? `Следующее: <strong>${formatDateTime(rec.nextRunAt)}</strong>` : ''}</div></div><div style="display:flex;gap:5px;align-items:center"><button class="btn btn-small" onclick="selectTicket('${t.id}')">👁 Открыть</button><button class="btn btn-small" onclick="toggleRecurrence('${t.id}')">${rec.enabled ? '⏸ Пауза' : '▶ Старт'}</button></div></div></div>`; }).join(''); }
 
 function renderClients() { const tbody = document.getElementById('clientsTable'); if (state.clients.length === 0) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><p>Нет заявителей</p></div></td></tr>'; return; } tbody.innerHTML = state.clients.map(c => { const ticketCount = state.tickets.filter(t => t.clientId === c.id).length; const company = c.companyId ? getCompany(c.companyId) : null; return `<tr><td><span class="avatar-small">${getInitials(c.name)}</span>${c.name}</td><td>${c.email}</td><td>${c.phone || '—'}</td><td>${company ? company.name : '—'}</td><td><strong>${ticketCount}</strong></td><td class="actions-cell"><button class="btn btn-small" onclick="openClientModal('${c.id}')">✏️</button><button class="btn btn-small btn-danger" onclick="deleteClient('${c.id}')">🗑️</button></td></tr>`; }).join(''); }
 function openClientModal(id = null) { document.getElementById('clientForm').reset(); document.getElementById('clientId').value = ''; document.getElementById('clientModalTitle').textContent = 'Новый заявитель'; document.getElementById('clientCompany').innerHTML = '<option value="">Без компании</option>' + state.companies.map(c => `<option value="${c.id}">${c.name}</option>`).join(''); if (id) { const c = getClient(id); document.getElementById('clientId').value = c.id; document.getElementById('clientName').value = c.name; document.getElementById('clientEmail').value = c.email; document.getElementById('clientPhone').value = c.phone || ''; document.getElementById('clientCompany').value = c.companyId || ''; document.getElementById('clientModalTitle').textContent = 'Редактировать'; } openModal('clientModal'); }
@@ -604,6 +811,11 @@ function saveGeneralSettings() { state.settings.companyName = document.getElemen
 function updateCategory(id, field, value) { const c = getCategory(id); if (c) { c[field] = value; save(); } }
 function deleteCategory(id) { if (!confirm('Удалить?')) return; state.categories = state.categories.filter(c => c.id !== id); save(); renderSettings(); }
 function resetDemoData() { if (!confirm('Сбросить все данные?')) return; Object.keys(localStorage).filter(k => k.startsWith('hd_')).forEach(k => localStorage.removeItem(k)); location.reload(); }
+
+// Закрытие модалки заявки по клику на фон
+document.getElementById('ticketViewModal').addEventListener('click', function(e) {
+    if (e.target === this) closeTicketModal();
+});
 
 if (typeof window.initFirebase === 'function') window.initFirebase(); else { seedData(); if (state.settings.theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); checkAuth(); }
 setInterval(() => { if (CURRENT_USER_ID) processRecurringTickets(); }, 30000);
