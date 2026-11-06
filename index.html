@@ -488,6 +488,8 @@ function setRecurrencePreset(period, interval) { document.getElementById('recurr
 // ===== AUTH =====
 async function checkAuth() {
   console.log('🔐 Проверка авторизации...');
+  console.log('👥 Пользователей в базе:', state.users.length);
+  
   if (state.session && state.session.userId) {
     const user = getUser(state.session.userId);
     if (user) {
