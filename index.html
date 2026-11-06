@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ярмарка CRM</title>
-<!-- Подключение Firebase -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -487,11 +486,65 @@ document.querySelectorAll('.nav-item').forEach(item => { item.addEventListener('
 
 document.querySelectorAll('.filter-tab').forEach(tab => { tab.addEventListener('click', () => { document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active')); tab.classList.add('active'); currentFilter = tab.dataset.filter; renderTickets(); }); });
 
-function populateFilters() { document.getElementById('filterCategory').innerHTML = '<option value="">Категория</option>' + state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join(''); const assignees = isAdmin() ? state.users : state.users.filter(u => u.id === CURRENT_USER_ID); document.getElementById('filterAssignee').innerHTML = '<option value="">Исполнитель</option><option value="unassigned">Неназначенные</option>' + assignees.map(u => `<option value="${u.id}">${u.fullName}</option>`).join(''); if (isAdmin()) document.getElementById('filterDepartment').innerHTML = '<option value="">Все отделы</option>' + state.departments.map(d => `<option value="${d.id}">${d.name}</option>`).join(''); }
+// ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ: сохраняет и восстанавливает выбранные значения фильтров
+function populateFilters() {
+    const currentCategory = document.getElementById('filterCategory').value;
+    const currentAssignee = document.getElementById('filterAssignee').value;
+    const currentDepartment = document.getElementById('filterDepartment') ? document.getElementById('filterDepartment').value : '';
+
+    document.getElementById('filterCategory').innerHTML = '<option value="">Категория</option>' + state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    document.getElementById('filterCategory').value = currentCategory;
+
+    const assignees = isAdmin() ? state.users : state.users.filter(u => u.id === CURRENT_USER_ID);
+    document.getElementById('filterAssignee').innerHTML = '<option value="">Исполнитель</option><option value="unassigned">Неназначенные</option>' + assignees.map(u => `<option value="${u.id}">${u.fullName}</option>`).join('');
+    document.getElementById('filterAssignee').value = currentAssignee;
+
+    if (isAdmin() && document.getElementById('filterDepartment')) {
+        document.getElementById('filterDepartment').innerHTML = '<option value="">Все отделы</option>' + state.departments.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+        document.getElementById('filterDepartment').value = currentDepartment;
+    }
+}
 
 function getVisibleTickets() { if (isAdmin()) return state.tickets; else return state.tickets.filter(t => t.assigneeId === CURRENT_USER_ID); }
 
-function filterTickets() { const search = document.getElementById('globalSearch').value.toLowerCase(); const priority = document.getElementById('filterPriority').value; const category = document.getElementById('filterCategory').value; const assignee = document.getElementById('filterAssignee').value; const department = isAdmin() ? document.getElementById('filterDepartment').value : ''; let filtered = getVisibleTickets(); filtered = filtered.filter(t => { const client = getClient(t.clientId); const matchSearch = !search || t.subject.toLowerCase().includes(search) || t.number.toLowerCase().includes(search) || (client && client.name.toLowerCase().includes(search)); const matchPriority = !priority || t.priority === priority; const matchCategory = !category || t.category === category; const matchAssignee = !assignee || (assignee === 'unassigned' ? !t.assigneeId : t.assigneeId === assignee); let matchDepartment = true; if (department) { const assigneeUser = getUser(t.assigneeId); matchDepartment = assigneeUser && assigneeUser.departmentId === department; } let matchFilter = true; if (currentFilter === 'mine') matchFilter = t.assigneeId === CURRENT_USER_ID; else if (currentFilter === 'unassigned') matchFilter = !t.assigneeId; else if (currentFilter === 'new') matchFilter = t.status === 'new'; else if (currentFilter === 'open') matchFilter = t.status === 'open'; else if (currentFilter === 'pending') matchFilter = t.status === 'pending'; else if (currentFilter === 'solved') matchFilter = t.status === 'solved' || t.status === 'closed'; else if (currentFilter === 'recurring') matchFilter = t.recurrence && t.recurrence.enabled; return matchSearch && matchPriority && matchCategory && matchAssignee && matchDepartment && matchFilter; }); filtered.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)); return filtered; }
+// ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ: безопасная проверка отдела
+function filterTickets() {
+    const search = document.getElementById('globalSearch').value.toLowerCase();
+    const priority = document.getElementById('filterPriority').value;
+    const category = document.getElementById('filterCategory').value;
+    const assignee = document.getElementById('filterAssignee').value;
+    const deptEl = document.getElementById('filterDepartment');
+    const department = (isAdmin() && deptEl) ? deptEl.value : '';
+
+    let filtered = getVisibleTickets();
+
+    filtered = filtered.filter(t => {
+        const client = getClient(t.clientId);
+        const matchSearch = !search || t.subject.toLowerCase().includes(search) || t.number.toLowerCase().includes(search) || (client && client.name.toLowerCase().includes(search));
+        const matchPriority = !priority || t.priority === priority;
+        const matchCategory = !category || t.category === category;
+        const matchAssignee = !assignee || (assignee === 'unassigned' ? !t.assigneeId : t.assigneeId === assignee);
+
+        let matchDepartment = true;
+        if (department) {
+            const assigneeUser = getUser(t.assigneeId);
+            matchDepartment = assigneeUser && assigneeUser.departmentId === department;
+        }
+
+        let matchFilter = true;
+        if (currentFilter === 'mine') matchFilter = t.assigneeId === CURRENT_USER_ID;
+        else if (currentFilter === 'unassigned') matchFilter = !t.assigneeId;
+        else if (currentFilter === 'new') matchFilter = t.status === 'new';
+        else if (currentFilter === 'open') matchFilter = t.status === 'open';
+        else if (currentFilter === 'pending') matchFilter = t.status === 'pending';
+        else if (currentFilter === 'solved') matchFilter = t.status === 'solved' || t.status === 'closed';
+        else if (currentFilter === 'recurring') matchFilter = t.recurrence && t.recurrence.enabled;
+        
+        return matchSearch && matchPriority && matchCategory && matchAssignee && matchDepartment && matchFilter;
+    });
+    filtered.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    return filtered;
+}
 
 function updateCounts() { const visible = getVisibleTickets(); document.getElementById('countAll').textContent = visible.length; document.getElementById('countMine').textContent = visible.filter(t => t.assigneeId === CURRENT_USER_ID && !['solved','closed'].includes(t.status)).length; document.getElementById('countUnassigned').textContent = visible.filter(t => !t.assigneeId && !['solved','closed'].includes(t.status)).length; document.getElementById('countNew').textContent = visible.filter(t => t.status === 'new').length; document.getElementById('countOpen').textContent = visible.filter(t => t.status === 'open').length; document.getElementById('countPending').textContent = visible.filter(t => t.status === 'pending').length; document.getElementById('countSolved').textContent = visible.filter(t => t.status === 'solved' || t.status === 'closed').length; const recurringCount = visible.filter(t => t.recurrence && t.recurrence.enabled).length; document.getElementById('countRecurring').textContent = recurringCount; document.getElementById('navBadgeRecurring').textContent = recurringCount; document.getElementById('navBadgeTickets').textContent = visible.filter(t => t.status === 'new' || t.status === 'open').length; }
 
