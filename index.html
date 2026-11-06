@@ -24,7 +24,6 @@
   let lastSavedAt = 0;
   let firebaseReady = false;
 
-  // ✅ ГЛАВНАЯ ФУНКЦИЯ СОХРАНЕНИЯ - всегда пишет в Firebase
   window.saveToFirebase = async function() {
     isSaving = true;
     try {
@@ -39,23 +38,24 @@
     finally { isSaving = false; }
   };
 
-  // ✅ ФУНКЦИЯ ПРИНУДИТЕЛЬНОЙ ЗАГРУЗКИ ИЗ FIREBASE
   window.forceLoadFromFirebase = async function() {
     try {
       const docRef = doc(db, 'crm_data', 'main');
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const data = docSnap.data();
-        state.users = data.users || state.users;
-        state.departments = data.departments || state.departments;
-        state.clients = data.clients || state.clients;
-        state.companies = data.companies || state.companies;
-        state.tickets = data.tickets || state.tickets;
-        state.categories = data.categories || state.categories;
-        state.settings = data.settings || state.settings;
-        firebaseReady = true;
-        console.log('✅ Данные загружены из Firebase');
-        return true;
+        if (data.users && data.users.length > 0) {
+          state.users = data.users;
+          state.departments = data.departments || state.departments;
+          state.clients = data.clients || state.clients;
+          state.companies = data.companies || state.companies;
+          state.tickets = data.tickets || state.tickets;
+          state.categories = data.categories || state.categories;
+          state.settings = data.settings || state.settings;
+          firebaseReady = true;
+          console.log('✅ Данные загружены из Firebase');
+          return true;
+        }
       }
     } catch (e) { console.error('Ошибка загрузки из Firebase:', e); }
     return false;
@@ -67,38 +67,34 @@
 
     if (docSnap.exists()) {
       const data = docSnap.data();
-      state.users = data.users || [];
-      state.departments = data.departments || [];
-      state.clients = data.clients || [];
-      state.companies = data.companies || [];
-      state.tickets = data.tickets || [];
-      state.categories = data.categories || [];
-      state.settings = data.settings || { 
-        theme: 'light', companyName: 'Ярмарка CRM',
-        autoArchiveHours: 24, soundEnabled: true
-      };
-      firebaseReady = true;
+      if (data.users && data.users.length > 0) {
+        state.users = data.users;
+        state.departments = data.departments || state.departments;
+        state.clients = data.clients || state.clients;
+        state.companies = data.companies || state.companies;
+        state.tickets = data.tickets || state.tickets;
+        state.categories = data.categories || state.categories;
+        state.settings = data.settings || state.settings;
+        firebaseReady = true;
+      } else if (state.users.length === 0) {
+        seedData();
+        await window.saveToFirebase();
+      }
     } else {
       seedData();
       await window.saveToFirebase();
     }
 
-    // ✅ REAL-TIME ПОДПИСКА - всегда обновляет данные
     onSnapshot(docRef, (doc) => {
       if (doc.exists() && !isSaving) {
         const newData = doc.data();
-        const updateTimestamp = newData.updatedAt ? new Date(newData.updatedAt).getTime() : 0;
-        
-        // Всегда принимаем обновления из Firebase
-        state.users = newData.users || state.users;
-        state.departments = newData.departments || state.departments;
-        state.clients = newData.clients || state.clients;
-        state.companies = newData.companies || state.companies;
-        state.tickets = newData.tickets || state.tickets;
-        state.categories = newData.categories || state.categories;
-        state.settings = newData.settings || state.settings;
-        
-        // Перерисовка активных экранов
+        if (newData.users) state.users = newData.users;
+        if (newData.departments) state.departments = newData.departments;
+        if (newData.clients) state.clients = newData.clients;
+        if (newData.companies) state.companies = newData.companies;
+        if (newData.tickets) state.tickets = newData.tickets;
+        if (newData.categories) state.categories = newData.categories;
+        if (newData.settings) state.settings = newData.settings;
         if (document.getElementById('page-tickets')?.classList.contains('active')) renderTickets();
         if (document.getElementById('page-recurring')?.classList.contains('active')) renderRecurring();
         if (document.getElementById('page-dashboard')?.classList.contains('active')) renderDashboard();
@@ -442,7 +438,16 @@ tr:hover td { background: var(--bg); }
 <div class="modal" id="userModal"><div class="modal-content"><div class="modal-header"><div class="modal-title" id="userModalTitle">Редактировать</div><button class="close-btn" onclick="closeModal('userModal')">&times;</button></div><div class="modal-body"><form id="userForm" onsubmit="saveUser(event)"><input type="hidden" id="userId"><div class="form-group"><label>ФИО *</label><input type="text" id="userFullName" required></div><div class="form-group"><label>Телефон *</label><input type="tel" id="userPhone" required></div><div class="form-group"><label>Отдел</label><select id="userDepartment"></select></div><div class="form-group"><label>Роль</label><select id="userRole"><option value="staff">Сотрудник</option><option value="admin">Администратор</option></select></div><div class="form-group"><label>Новый пин-код (4 цифры)</label><input type="password" id="userPin" class="pin-input" maxlength="4" inputmode="numeric" placeholder="••••"></div></form></div><div class="modal-footer"><button class="btn" onclick="closeModal('userModal')">Отмена</button><button class="btn btn-primary" onclick="document.getElementById('userForm').requestSubmit()">Сохранить</button></div></div></div>
 <div class="toast" id="toast"></div>
 <script>
-let state = { users: [], departments: [], clients: [], companies: [], tickets: [], categories: [], settings: { theme: 'light', companyName: 'Ярмарка CRM', autoArchiveHours: 24, soundEnabled: true }, session: null };
+let state = { 
+  users: JSON.parse(localStorage.getItem('hd_users')) || [], 
+  departments: JSON.parse(localStorage.getItem('hd_departments')) || [], 
+  clients: JSON.parse(localStorage.getItem('hd_clients')) || [], 
+  companies: JSON.parse(localStorage.getItem('hd_companies')) || [], 
+  tickets: JSON.parse(localStorage.getItem('hd_tickets')) || [], 
+  categories: JSON.parse(localStorage.getItem('hd_categories')) || [], 
+  settings: JSON.parse(localStorage.getItem('hd_settings')) || { theme: 'light', companyName: 'Ярмарка CRM', autoArchiveHours: 24, soundEnabled: true }, 
+  session: JSON.parse(localStorage.getItem('hd_session')) || null 
+};
 let CURRENT_USER_ID = null, selectedTicketId = null, currentFilter = 'all', postponeTicketId = null, selectedLoginUserId = null;
 const STATUS_LABELS = { new: 'Новая', open: 'В работе', pending: 'Ожидание', solved: 'Решена', closed: 'Архив' };
 const PRIORITY_LABELS = { low: 'Низкий', medium: 'Средний', high: 'Высокий', urgent: 'Срочный' };
@@ -450,21 +455,16 @@ const ROLE_LABELS = { admin: 'Администратор', staff: 'Сотруд�
 const PERIOD_FULL = { hourly: 'часов', daily: 'дней', weekly: 'недель', monthly: 'месяцев' };
 
 function seedData() {
-  state.departments = [{ id: 'dep1', name: 'Техническая поддержка', description: 'Решение технических вопросов', color: '#10b981', createdAt: new Date().toISOString() }, { id: 'dep2', name: 'Отдел продаж', description: 'Работа с клиентами', color: '#3b82f6', createdAt: new Date().toISOString() }, { id: 'dep3', name: 'Бухгалтерия', description: 'Финансовые вопросы', color: '#f59e0b', createdAt: new Date().toISOString() }, { id: 'dep4', name: 'Отдел кадров', description: 'Работа с персоналом', color: '#8b5cf6', createdAt: new Date().toISOString() }];
-  state.users = [{ id: 'user-admin', fullName: 'Администратор Системы', phone: '+7 900 000-00-00', pin: '1408', role: 'admin', departmentId: 'dep1', createdAt: new Date().toISOString() }, { id: 'user-2', fullName: 'Петров Сергей Александрович', phone: '+7 900 111-11-11', pin: '1111', role: 'staff', departmentId: 'dep1', createdAt: new Date().toISOString() }, { id: 'user-3', fullName: 'Сидорова Анна Игоревна', phone: '+7 900 222-22-22', pin: '2222', role: 'staff', departmentId: 'dep2', createdAt: new Date().toISOString() }];
-  state.companies = [{ id: 'co1', name: 'Компания 1', domain: 'company1.ru', createdAt: new Date().toISOString() }, { id: 'co2', name: 'Компания 2', domain: 'company2.ru', createdAt: new Date().toISOString() }, { id: 'co3', name: 'Компания 3', domain: 'company3.ru', createdAt: new Date().toISOString() }];
-  state.clients = [{ id: 'c1', name: 'Заявитель 1', email: 'a1@yarmarka.ru', phone: '+7 900 111-11-11', companyId: 'co1', createdAt: new Date().toISOString() }, { id: 'c2', name: 'Заявитель 2', email: 'a2@yarmarka.ru', phone: '+7 900 222-22-22', companyId: 'co2', createdAt: new Date().toISOString() }, { id: 'c3', name: 'Заявитель 3', email: 'a3@yarmarka.ru', phone: '+7 900 333-33-33', companyId: 'co3', createdAt: new Date().toISOString() }];
-  state.categories = [{ id: 'cat1', name: 'Тех. поддержка', color: '#10b981' }, { id: 'cat2', name: 'Продажи', color: '#059669' }, { id: 'cat3', name: 'Оплата', color: '#f59e0b' }, { id: 'cat4', name: 'Возврат', color: '#ef4444' }, { id: 'cat5', name: 'Другое', color: '#6b7280' }];
-  const now = Date.now();
-  state.tickets = [{ id: 't1', number: 'HD-1001', subject: 'Не работает оплата', description: 'Ошибка при оплате.', clientId: 'c1', category: 'cat3', priority: 'high', status: 'open', assigneeId: 'user-admin', createdAt: new Date(now - 3600000*2).toISOString(), updatedAt: new Date(now - 3600000).toISOString(), resolvedAt: null, recurrence: null, recurringParentId: null, comments: [{ id: 'cm1', authorId: 'c1', authorType: 'client', text: 'Не могу оплатить.', createdAt: new Date(now - 3600000*2).toISOString() }, { id: 'cm2', authorId: 'user-admin', authorType: 'agent', text: 'Проверю.', createdAt: new Date(now - 3600000).toISOString() }], history: [] }, { id: 't2', number: 'HD-1002', subject: 'Вопрос по тарифу', description: 'Хотел бы узнать о тарифах.', clientId: 'c2', category: 'cat2', priority: 'medium', status: 'new', assigneeId: 'user-3', createdAt: new Date(now - 3600000).toISOString(), updatedAt: new Date(now - 3600000).toISOString(), resolvedAt: null, recurrence: null, recurringParentId: null, comments: [{ id: 'cm4', authorId: 'c2', authorType: 'client', text: 'Расскажите про тарифы.', createdAt: new Date(now - 3600000).toISOString() }], history: [] }, { id: 't3', number: 'HD-1003', subject: 'Возврат средств', description: 'Товар не соответствует.', clientId: 'c3', category: 'cat4', priority: 'urgent', status: 'pending', assigneeId: 'user-2', createdAt: new Date(now - 86400000).toISOString(), updatedAt: new Date(now - 3600000*5).toISOString(), dueAt: new Date(now + 86400000).toISOString(), resolvedAt: null, postponeReason: 'Ждём фото', recurrence: null, recurringParentId: null, comments: [{ id: 'cm5', authorId: 'c3', authorType: 'client', text: 'Товар повреждённый.', createdAt: new Date(now - 86400000).toISOString() }], history: [] }, { id: 't4', number: 'HD-1004', subject: 'Ошибка при входе', description: 'Не могу войти в ЛК.', clientId: 'c1', category: 'cat1', priority: 'medium', status: 'solved', assigneeId: 'user-2', createdAt: new Date(now - 86400000*2).toISOString(), updatedAt: new Date(now - 86400000).toISOString(), resolvedAt: new Date(now - 86400000).toISOString(), recurrence: null, recurringParentId: null, comments: [{ id: 'cm8', authorId: 'user-2', authorType: 'agent', text: 'Сбросил пароль.', createdAt: new Date(now - 86400000).toISOString() }], history: [] }, { id: 't-rec-1', number: 'HD-1005', subject: 'Еженедельная проверка серверов', description: 'Плановая проверка.', clientId: 'c1', category: 'cat1', priority: 'medium', status: 'open', assigneeId: 'user-2', tags: ['maintenance'], createdAt: new Date(now - 86400000*7).toISOString(), updatedAt: new Date(now - 3600000).toISOString(), resolvedAt: null, postponeReason: '', recurringParentId: null, recurrence: { enabled: true, period: 'weekly', interval: 1, firstRunAt: new Date(now - 86400000*7).toISOString(), nextRunAt: new Date(now + 86400000*5).toISOString(), lastRunAt: new Date(now - 86400000*2).toISOString(), endDate: null, maxCount: null, currentCount: 3 }, comments: [{ id: 'cm-rec-1', authorId: 'c1', authorType: 'client', text: 'Плановая проверка.', createdAt: new Date(now - 86400000*7).toISOString() }, { id: 'cm-rec-2', authorId: 'system', authorType: 'system', text: '🔁 Авто-экземпляр создан.', createdAt: new Date(now - 86400000*2).toISOString() }], history: [{ action: 'created', at: new Date(now - 86400000*7).toISOString(), by: 'c1' }] }];
+  if (state.departments.length === 0) state.departments = [{ id: 'dep1', name: 'Техническая поддержка', description: 'Решение технических вопросов', color: '#10b981', createdAt: new Date().toISOString() }, { id: 'dep2', name: 'Отдел продаж', description: 'Работа с клиентами', color: '#3b82f6', createdAt: new Date().toISOString() }, { id: 'dep3', name: 'Бухгалтерия', description: 'Финансовые вопросы', color: '#f59e0b', createdAt: new Date().toISOString() }, { id: 'dep4', name: 'Отдел кадров', description: 'Работа с персоналом', color: '#8b5cf6', createdAt: new Date().toISOString() }];
+  if (state.users.length === 0) state.users = [{ id: 'user-admin', fullName: 'Администратор Системы', phone: '+7 900 000-00-00', pin: '1408', role: 'admin', departmentId: 'dep1', createdAt: new Date().toISOString() }, { id: 'user-2', fullName: 'Петров Сергей Александрович', phone: '+7 900 111-11-11', pin: '1111', role: 'staff', departmentId: 'dep1', createdAt: new Date().toISOString() }, { id: 'user-3', fullName: 'Сидорова Анна Игоревна', phone: '+7 900 222-22-22', pin: '2222', role: 'staff', departmentId: 'dep2', createdAt: new Date().toISOString() }];
+  if (state.companies.length === 0) state.companies = [{ id: 'co1', name: 'Компания 1', domain: 'company1.ru', createdAt: new Date().toISOString() }, { id: 'co2', name: 'Компания 2', domain: 'company2.ru', createdAt: new Date().toISOString() }, { id: 'co3', name: 'Компания 3', domain: 'company3.ru', createdAt: new Date().toISOString() }];
+  if (state.clients.length === 0) state.clients = [{ id: 'c1', name: 'Заявитель 1', email: 'a1@yarmarka.ru', phone: '+7 900 111-11-11', companyId: 'co1', createdAt: new Date().toISOString() }, { id: 'c2', name: 'Заявитель 2', email: 'a2@yarmarka.ru', phone: '+7 900 222-22-22', companyId: 'co2', createdAt: new Date().toISOString() }, { id: 'c3', name: 'Заявитель 3', email: 'a3@yarmarka.ru', phone: '+7 900 333-33-33', companyId: 'co3', createdAt: new Date().toISOString() }];
+  if (state.categories.length === 0) state.categories = [{ id: 'cat1', name: 'Тех. поддержка', color: '#10b981' }, { id: 'cat2', name: 'Продажи', color: '#059669' }, { id: 'cat3', name: 'Оплата', color: '#f59e0b' }, { id: 'cat4', name: 'Возврат', color: '#ef4444' }, { id: 'cat5', name: 'Другое', color: '#6b7280' }];
+  if (state.tickets.length === 0) { const now = Date.now(); state.tickets = [{ id: 't1', number: 'HD-1001', subject: 'Не работает оплата', description: 'Ошибка при оплате.', clientId: 'c1', category: 'cat3', priority: 'high', status: 'open', assigneeId: 'user-admin', createdAt: new Date(now - 3600000*2).toISOString(), updatedAt: new Date(now - 3600000).toISOString(), resolvedAt: null, recurrence: null, recurringParentId: null, comments: [{ id: 'cm1', authorId: 'c1', authorType: 'client', text: 'Не могу оплатить.', createdAt: new Date(now - 3600000*2).toISOString() }, { id: 'cm2', authorId: 'user-admin', authorType: 'agent', text: 'Проверю.', createdAt: new Date(now - 3600000).toISOString() }], history: [] }, { id: 't2', number: 'HD-1002', subject: 'Вопрос по тарифу', description: 'Хотел бы узнать о тарифах.', clientId: 'c2', category: 'cat2', priority: 'medium', status: 'new', assigneeId: 'user-3', createdAt: new Date(now - 3600000).toISOString(), updatedAt: new Date(now - 3600000).toISOString(), resolvedAt: null, recurrence: null, recurringParentId: null, comments: [{ id: 'cm4', authorId: 'c2', authorType: 'client', text: 'Расскажите про тарифы.', createdAt: new Date(now - 3600000).toISOString() }], history: [] }, { id: 't3', number: 'HD-1003', subject: 'Возврат средств', description: 'Товар не соответствует.', clientId: 'c3', category: 'cat4', priority: 'urgent', status: 'pending', assigneeId: 'user-2', createdAt: new Date(now - 86400000).toISOString(), updatedAt: new Date(now - 3600000*5).toISOString(), dueAt: new Date(now + 86400000).toISOString(), resolvedAt: null, postponeReason: 'Ждём фото', recurrence: null, recurringParentId: null, comments: [{ id: 'cm5', authorId: 'c3', authorType: 'client', text: 'Товар повреждённый.', createdAt: new Date(now - 86400000).toISOString() }], history: [] }, { id: 't4', number: 'HD-1004', subject: 'Ошибка при входе', description: 'Не могу войти в ЛК.', clientId: 'c1', category: 'cat1', priority: 'medium', status: 'solved', assigneeId: 'user-2', createdAt: new Date(now - 86400000*2).toISOString(), updatedAt: new Date(now - 86400000).toISOString(), resolvedAt: new Date(now - 86400000).toISOString(), recurrence: null, recurringParentId: null, comments: [{ id: 'cm8', authorId: 'user-2', authorType: 'agent', text: 'Сбросил пароль.', createdAt: new Date(now - 86400000).toISOString() }], history: [] }, { id: 't-rec-1', number: 'HD-1005', subject: 'Еженедельная проверка серверов', description: 'Плановая проверка.', clientId: 'c1', category: 'cat1', priority: 'medium', status: 'open', assigneeId: 'user-2', tags: ['maintenance'], createdAt: new Date(now - 86400000*7).toISOString(), updatedAt: new Date(now - 3600000).toISOString(), resolvedAt: null, postponeReason: '', recurringParentId: null, recurrence: { enabled: true, period: 'weekly', interval: 1, firstRunAt: new Date(now - 86400000*7).toISOString(), nextRunAt: new Date(now + 86400000*5).toISOString(), lastRunAt: new Date(now - 86400000*2).toISOString(), endDate: null, maxCount: null, currentCount: 3 }, comments: [{ id: 'cm-rec-1', authorId: 'c1', authorType: 'client', text: 'Плановая проверка.', createdAt: new Date(now - 86400000*7).toISOString() }, { id: 'cm-rec-2', authorId: 'system', authorType: 'system', text: '🔁 Авто-экземпляр создан.', createdAt: new Date(now - 86400000*2).toISOString() }], history: [{ action: 'created', at: new Date(now - 86400000*7).toISOString(), by: 'c1' }] }]; }
+  save();
 }
 
-// ✅ УНИВЕРСАЛЬНАЯ ФУНКЦИЯ СОХРАНЕНИЯ - всегда пишет в Firebase
 async function save() {
-  if (typeof window.saveToFirebase === 'function') {
-    await window.saveToFirebase();
-  }
-  // localStorage только как кэш
   localStorage.setItem('hd_users', JSON.stringify(state.users));
   localStorage.setItem('hd_departments', JSON.stringify(state.departments));
   localStorage.setItem('hd_clients', JSON.stringify(state.clients));
@@ -474,6 +474,7 @@ async function save() {
   localStorage.setItem('hd_settings', JSON.stringify(state.settings));
   if (state.session) localStorage.setItem('hd_session', JSON.stringify(state.session));
   else localStorage.removeItem('hd_session');
+  if (typeof window.saveToFirebase === 'function') await window.saveToFirebase();
 }
 
 function getUser(id) { return state.users.find(u => u.id === id); }
@@ -542,13 +543,10 @@ function processRecurringTickets() {
 function toggleRecurrenceConfig() { const enabled = document.getElementById('recurrenceEnabled').checked; document.getElementById('recurrenceConfig').classList.toggle('active', enabled); if (enabled && !document.getElementById('recurrenceFirstRun').value) { const d = new Date(Date.now() + 3600000); document.getElementById('recurrenceFirstRun').value = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); } }
 function setRecurrencePreset(period, interval) { document.getElementById('recurrenceEnabled').checked = true; document.getElementById('recurrencePeriod').value = period; document.getElementById('recurrenceInterval').value = interval; document.getElementById('recurrenceConfig').classList.add('active'); document.querySelectorAll('.recurrence-presets button').forEach(b => b.classList.remove('active')); if (event && event.target) event.target.classList.add('active'); }
 
-// ✅ ИСПРАВЛЕННАЯ АВТОРИЗАЦИЯ - всегда загружает свежие данные из Firebase
 async function checkAuth() {
-  // ✅ ПРИНУДИТЕЛЬНАЯ ЗАГРУЗКА ИЗ FIREBASE
   if (typeof window.forceLoadFromFirebase === 'function') {
     await window.forceLoadFromFirebase();
   }
-  
   if (state.session && state.session.userId && getUser(state.session.userId)) {
     CURRENT_USER_ID = state.session.userId;
     showApp();
@@ -568,6 +566,7 @@ function hideLoginError(id) { document.getElementById(id).classList.remove('show
 
 function renderUserPicker() { 
     const picker = document.getElementById('userPicker'); 
+    console.log('📋 Пользователи в системе:', state.users.map(u => u.fullName));
     if (state.users.length === 0) { picker.innerHTML = '<div style="padding:15px;text-align:center;color:var(--text-muted);font-size:12px">Нет зарегистрированных сотрудников</div>'; return; } 
     picker.innerHTML = state.users.map(u => { 
         const dep = getDepartment(u.departmentId); 
@@ -582,13 +581,15 @@ async function doLogin() {
     const pin = document.getElementById('loginPin').value; 
     if (!/^\d{4}$/.test(pin)) { showLoginError('loginError', 'Пин-код должен содержать 4 цифры'); return; } 
     
-    // ✅ ПРИНУДИТЕЛЬНАЯ ЗАГРУЗКА СВЕЖИХ ДАННЫХ ПЕРЕД ВХОДОМ
     if (typeof window.forceLoadFromFirebase === 'function') {
       await window.forceLoadFromFirebase();
     }
     
+    console.log('🔍 Попытка входа. Пользователи:', state.users.map(u => `${u.fullName} (пин: ${u.pin})`));
+    console.log('🔍 Выбранный ID:', selectedLoginUserId, 'Введённый пин:', pin);
+    
     const user = getUser(selectedLoginUserId); 
-    if (!user) { showLoginError('loginError', 'Пользователь не найден'); return; } 
+    if (!user) { showLoginError('loginError', 'Пользователь не найден. Обновите страницу.'); return; } 
     if (user.pin !== pin) { showLoginError('loginError', 'Неверный пин-код'); return; } 
     CURRENT_USER_ID = user.id; 
     state.session = { userId: user.id, loginAt: new Date().toISOString() }; 
@@ -610,30 +611,20 @@ async function doRegister() {
     if (!/^\d{4}$/.test(pin)) { showLoginError('registerError', 'Пин-код должен содержать 4 цифры'); return; } 
     if (pin !== pinConfirm) { showLoginError('registerError', 'Пин-коды не совпадают'); return; } 
     if (state.users.some(u => u.phone === phone)) { showLoginError('registerError', 'Телефон уже зарегистрирован'); return; } 
-    
     const newUser = { id: 'user-' + Date.now(), fullName, phone, pin, role: 'staff', departmentId, createdAt: new Date().toISOString() }; 
     state.users.push(newUser);
     CURRENT_USER_ID = newUser.id;
     state.session = { userId: newUser.id, loginAt: new Date().toISOString() };
-    
-    // ✅ СРАЗУ СОХРАНЯЕМ В FIREBASE
-    await save();
-    
+    localStorage.setItem('hd_users', JSON.stringify(state.users));
+    localStorage.setItem('hd_session', JSON.stringify(state.session));
+    if (typeof window.saveToFirebase === 'function') {
+        window.saveToFirebase().catch(err => { console.error('Ошибка Firebase:', err); });
+    }
     toast('✅ Регистрация успешна! Добро пожаловать, ' + fullName.split(' ')[0] + '!');
     showApp();
 }
 
-async function doLogout() { 
-    if (!confirm('Выйти из системы?')) return; 
-    state.session = null; 
-    CURRENT_USER_ID = null; 
-    selectedLoginUserId = null; 
-    selectedTicketId = null; 
-    await save(); 
-    document.getElementById('loginPin').value = ''; 
-    showLogin(); 
-}
-
+async function doLogout() { if (!confirm('Выйти из системы?')) return; state.session = null; CURRENT_USER_ID = null; selectedLoginUserId = null; selectedTicketId = null; await save(); document.getElementById('loginPin').value = ''; showLogin(); }
 function renderRegDepartments() { document.getElementById('regDepartment').innerHTML = '<option value="">— Выберите отдел —</option>' + state.departments.map(d => `<option value="${d.id}">${d.name}</option>`).join(''); }
 document.addEventListener('input', e => { if (e.target.classList && e.target.classList.contains('pin-input')) { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4); } });
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && document.getElementById('loginScreen').style.display !== 'none') { if (document.getElementById('loginForm').classList.contains('active')) doLogin(); else if (document.getElementById('registerForm').classList.contains('active')) doRegister(); } if (e.key === 'Escape' && document.getElementById('ticketViewModal')?.classList.contains('active')) { closeTicketModal(); } });
@@ -1124,15 +1115,7 @@ async function resetDemoData() { if (!confirm('Сбросить все данн�
 
 document.getElementById('ticketViewModal').addEventListener('click', function(e) { if (e.target === this) closeTicketModal(); });
 
-// ✅ ИНИЦИАЛИЗАЦИЯ - сначала Firebase, потом всё остальное
-if (typeof window.initFirebase === 'function') {
-  window.initFirebase();
-} else {
-  seedData();
-  if (state.settings.theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-  checkAuth();
-  startAutoArchive();
-}
+if (typeof window.initFirebase === 'function') window.initFirebase(); else { seedData(); if (state.settings.theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); checkAuth(); startAutoArchive(); }
 setInterval(() => { if (CURRENT_USER_ID) processRecurringTickets(); }, 30000);
 setTimeout(() => { if (CURRENT_USER_ID) processRecurringTickets(); }, 3000);
 console.log('%c🎪 Ярмарка CRM + Firebase', 'color:#10b981;font-size:16px;font-weight:bold');
