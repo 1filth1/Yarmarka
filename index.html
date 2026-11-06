@@ -565,6 +565,46 @@ document.addEventListener('keydown', e => { if (e.key === 'Enter' && document.ge
 
 document.querySelectorAll('.nav-item').forEach(item => { item.addEventListener('click', () => { document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); item.classList.add('active'); const page = item.dataset.page; document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); document.getElementById('page-' + page).classList.add('active'); if (page === 'dashboard') renderDashboard(); if (page === 'clients') renderClients(); if (page === 'companies') renderCompanies(); if (page === 'staff') renderStaff(); if (page === 'reports') renderReports(); if (page === 'tickets') renderTickets(); if (page === 'recurring') renderRecurring(); if (page === 'departments') renderDepartments(); if (page === 'users') renderUsers(); if (page === 'settings') renderSettings(); }); });
 
+// ✅ ДОБАВЛЕННЫЕ ФУНКЦИИ (которых не хватало)
+function openPostponeModal(id) {
+    const t = state.tickets.find(x => x.id === id);
+    if (!t) return;
+    postponeTicketId = id;
+    const tomorrow = new Date(Date.now() + 86400000);
+    document.getElementById('postponeDate').value = t.dueAt ? t.dueAt.slice(0, 16) : new Date(tomorrow.getTime() - tomorrow.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    document.getElementById('postponeReason').value = t.postponeReason || '';
+    openModal('postponeModal');
+}
+
+function setPostponePreset(hours) { 
+    const d = new Date(Date.now() + hours * 3600000); 
+    document.getElementById('postponeDate').value = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); 
+}
+
+function confirmPostpone() { 
+    const dateValue = document.getElementById('postponeDate').value; 
+    if (!dateValue) { toast('Укажите дату', 'error'); return; } 
+    const t = state.tickets.find(x => x.id === postponeTicketId); 
+    if (!t) return; 
+    const reason = document.getElementById('postponeReason').value.trim(); 
+    const dueDate = new Date(dateValue); 
+    const currentUser = getCurrentUser(); 
+    t.status = 'pending'; 
+    t.dueAt = dueDate.toISOString(); 
+    t.postponeReason = reason; 
+    t.updatedAt = new Date().toISOString(); 
+    t.comments.push({ id: 'cm' + Date.now(), authorId: CURRENT_USER_ID, authorType: 'agent', text: '⏸ Заявка отложена до ' + formatDateTime(dueDate.toISOString()) + (reason ? '\nПричина: ' + reason : ''), createdAt: new Date().toISOString() }); 
+    t.history = t.history || []; 
+    t.history.push({ action: 'postponed', at: new Date().toISOString(), by: CURRENT_USER_ID, details: currentUser ? currentUser.fullName : 'Неизвестно' }); 
+    save(); 
+    closeModal('postponeModal'); 
+    toast('⏸ Заявка отложена'); 
+    renderTickets(); 
+    if (document.getElementById('ticketViewModal').classList.contains('active')) {
+        closeTicketModal();
+    }
+}
+
 function renderStatusCards() {
   const visible = getVisibleTickets();
   const all = visible.length;
@@ -995,7 +1035,7 @@ function importData(event) {
 
 document.getElementById('ticketViewModal').addEventListener('click', function(e) { if (e.target === this) closeTicketModal(); });
 
-// ✅ ЭКСПОРТ ВСЕХ ФУНКЦИЙ В WINDOW
+// ✅ ПОЛНЫЙ СПИСОК ЭКСПОРТА ВСЕХ ФУНКЦИЙ
 window.switchLoginTab = switchLoginTab;
 window.selectLoginUser = selectLoginUser;
 window.doLogin = doLogin;
@@ -1018,6 +1058,7 @@ window.openTicketModal = openTicketModal;
 window.saveTicket = saveTicket;
 window.toggleRecurrenceConfig = toggleRecurrenceConfig;
 window.setRecurrencePreset = setRecurrencePreset;
+window.selectTicket = selectTicket;
 window.openClientModal = openClientModal;
 window.saveClient = saveClient;
 window.deleteClient = deleteClient;
@@ -1049,7 +1090,6 @@ window.renderUsers = renderUsers;
 window.renderSettings = renderSettings;
 window.renderRecurring = renderRecurring;
 
-// ✅ ИНИЦИАЛИЗАЦИЯ
 async function initApp() {
   console.log('🚀 Инициализация приложения...');
   
