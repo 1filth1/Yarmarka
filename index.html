@@ -21,87 +21,103 @@
   const db = getFirestore(app);
   let isSaving = false;
 
-  // ✅ ЕДИНАЯ ФУНКЦИЯ СОХРАНЕНИЯ - всегда пишет в Firebase
+  // ✅ СОХРАНЕНИЕ В FIREBASE
   window.saveToFirebase = async function() {
     isSaving = true;
     try {
       await setDoc(doc(db, 'crm_data', 'main'), {
-        users: state.users,
-        departments: state.departments,
-        clients: state.clients,
-        companies: state.companies,
-        tickets: state.tickets,
-        categories: state.categories,
-        settings: state.settings,
-        updatedAt: new Date().toISOString()
+        users: state.users, departments: state.departments, clients: state.clients,
+        companies: state.companies, tickets: state.tickets, categories: state.categories,
+        settings: state.settings, updatedAt: new Date().toISOString()
       });
-      console.log('✅ Данные сохранены в Firebase');
-    } catch (e) {
-      console.error("❌ Ошибка Firebase:", e);
-    }
+      console.log('✅ Сохранено в Firebase');
+    } catch (e) { console.error("❌ Firebase error:", e); }
     finally { isSaving = false; }
   };
 
-  // ✅ ЗАГРУЗКА ИЗ FIREBASE - единая база для всех
+  // ✅ ЗАГРУЗКА ИЗ FIREBASE
   window.loadFromFirebase = async function() {
     try {
       const docSnap = await getDoc(doc(db, 'crm_data', 'main'));
       if (docSnap.exists()) {
-        const data = docSnap.data();
-        state.users = data.users || [];
-        state.departments = data.departments || [];
-        state.clients = data.clients || [];
-        state.companies = data.companies || [];
-        state.tickets = data.tickets || [];
-        state.categories = data.categories || [];
-        state.settings = data.settings || { theme: 'light', companyName: 'Ярмарка CRM', autoArchiveHours: 24, soundEnabled: true };
-        console.log('✅ Загружено из Firebase:', state.users.length, 'пользователей,', state.tickets.length, 'заявок');
-        return true;
+        const d = docSnap.data();
+        if (d.users && d.users.length > 0) {
+          state.users = d.users;
+          state.departments = d.departments || state.departments;
+          state.clients = d.clients || state.clients;
+          state.companies = d.companies || state.companies;
+          state.tickets = d.tickets || state.tickets;
+          state.categories = d.categories || state.categories;
+          state.settings = d.settings || state.settings;
+          console.log('✅ Загружено из Firebase:', state.users.length, 'пользователей');
+          return true;
+        }
       }
       return false;
-    } catch (e) {
-      console.error('❌ Ошибка загрузки:', e);
-      return false;
+    } catch (e) { 
+      console.error('❌ Ошибка загрузки Firebase:', e); 
+      return false; 
     }
   };
 
-  // ✅ ИНИЦИАЛИЗАЦИЯ - загружаем из Firebase, если пусто - создаём
+  // ✅ ИНИЦИАЛИЗАЦИЯ С ГАРАНТИРОВАННЫМИ ДАННЫМИ
   window.initFirebase = async function() {
-    console.log('🚀 Инициализация Firebase...');
+    console.log('🚀 Инициализация...');
     
+    // 1. Пытаемся загрузить из Firebase
     const loaded = await window.loadFromFirebase();
     
+    // 2. Если Firebase пуст или недоступен — проверяем localStorage
     if (!loaded || state.users.length === 0) {
-      console.log('📦 База пустая, создаём демо-данные...');
+      const localUsers = JSON.parse(localStorage.getItem('hd_users')) || [];
+      if (localUsers.length > 0) {
+        console.log('📦 Загружаем из localStorage:', localUsers.length, 'пользователей');
+        state.users = localUsers;
+        state.departments = JSON.parse(localStorage.getItem('hd_departments')) || [];
+        state.clients = JSON.parse(localStorage.getItem('hd_clients')) || [];
+        state.companies = JSON.parse(localStorage.getItem('hd_companies')) || [];
+        state.tickets = JSON.parse(localStorage.getItem('hd_tickets')) || [];
+        state.categories = JSON.parse(localStorage.getItem('hd_categories')) || [];
+        state.settings = JSON.parse(localStorage.getItem('hd_settings')) || { theme: 'light', companyName: 'Ярмарка CRM', autoArchiveHours: 24, soundEnabled: true };
+        // Сохраняем в Firebase
+        await window.saveToFirebase();
+      }
+    }
+    
+    // 3. Если всё ещё пусто — создаём демо-данные
+    if (state.users.length === 0) {
+      console.log('🆕 Создаём демо-данные с администратором...');
       seedData();
       await window.saveToFirebase();
     }
+    
+    console.log('👥 Итого пользователей:', state.users.length);
+    console.log('👤 Администратор:', state.users.find(u => u.role === 'admin'));
 
-    // ✅ REAL-TIME ПОДПИСКА - все изменения синхронизируются
+    // 4. Real-time подписка
     onSnapshot(doc(db, 'crm_data', 'main'), (doc) => {
       if (doc.exists() && !isSaving) {
         const newData = doc.data();
-        console.log('🔄 Получены обновления из Firebase');
-        
-        state.users = newData.users || state.users;
-        state.departments = newData.departments || state.departments;
-        state.clients = newData.clients || state.clients;
-        state.companies = newData.companies || state.companies;
-        state.tickets = newData.tickets || state.tickets;
-        state.categories = newData.categories || state.categories;
-        state.settings = newData.settings || state.settings;
-        
-        // Перерисовка активных экранов
-        if (document.getElementById('page-tickets')?.classList.contains('active')) renderTickets();
-        if (document.getElementById('page-recurring')?.classList.contains('active')) renderRecurring();
-        if (document.getElementById('page-dashboard')?.classList.contains('active')) renderDashboard();
-        if (document.getElementById('ticketViewModal')?.classList.contains('active') && selectedTicketId) {
-          const t = state.tickets.find(x => x.id === selectedTicketId);
-          if (t) openTicketViewModal(t);
+        if (newData.users && newData.users.length > 0) {
+          state.users = newData.users;
+          state.departments = newData.departments || state.departments;
+          state.clients = newData.clients || state.clients;
+          state.companies = newData.companies || state.companies;
+          state.tickets = newData.tickets || state.tickets;
+          state.categories = newData.categories || state.categories;
+          state.settings = newData.settings || state.settings;
+          
+          if (document.getElementById('page-tickets')?.classList.contains('active')) renderTickets();
+          if (document.getElementById('page-recurring')?.classList.contains('active')) renderRecurring();
+          if (document.getElementById('page-dashboard')?.classList.contains('active')) renderDashboard();
+          if (document.getElementById('ticketViewModal')?.classList.contains('active') && selectedTicketId) {
+            const t = state.tickets.find(x => x.id === selectedTicketId);
+            if (t) openTicketViewModal(t);
+          }
+          if (document.getElementById('page-staff')?.classList.contains('active')) renderStaff();
+          if (document.getElementById('page-users')?.classList.contains('active')) renderUsers();
+          if (document.getElementById('page-departments')?.classList.contains('active')) renderDepartments();
         }
-        if (document.getElementById('page-staff')?.classList.contains('active')) renderStaff();
-        if (document.getElementById('page-users')?.classList.contains('active')) renderUsers();
-        if (document.getElementById('page-departments')?.classList.contains('active')) renderDepartments();
       }
     });
 
