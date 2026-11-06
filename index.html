@@ -32,6 +32,7 @@
         settings: state.settings, updatedAt: new Date().toISOString()
       }, { merge: true });
       lastSavedAt = Date.now();
+      console.log('✅ Данные сохранены в Firebase');
     } catch (e) { console.error("Ошибка Firebase:", e); }
     finally { isSaving = false; }
   };
@@ -519,6 +520,7 @@ function selectLoginUser(id) { selectedLoginUserId = id; renderUserPicker(); doc
 
 function doLogin() { hideLoginError('loginError'); if (!selectedLoginUserId) { showLoginError('loginError', 'Выберите сотрудника'); return; } const pin = document.getElementById('loginPin').value; if (!/^\d{4}$/.test(pin)) { showLoginError('loginError', 'Пин-код должен содержать 4 цифры'); return; } const user = getUser(selectedLoginUserId); if (!user) { showLoginError('loginError', 'Пользователь не найден'); return; } if (user.pin !== pin) { showLoginError('loginError', 'Неверный пин-код'); return; } CURRENT_USER_ID = user.id; state.session = { userId: user.id, loginAt: new Date().toISOString() }; save(); toast('👋 Добро пожаловать, ' + user.fullName.split(' ')[0] + '!'); showApp(); }
 
+// ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ РЕГИСТРАЦИИ
 function doRegister() { 
     hideLoginError('registerError'); 
     const fullName = document.getElementById('regFullName').value.trim(); 
@@ -526,31 +528,49 @@ function doRegister() {
     const departmentId = document.getElementById('regDepartment').value; 
     const pin = document.getElementById('regPin').value; 
     const pinConfirm = document.getElementById('regPinConfirm').value; 
+    
+    // Валидация
     if (!fullName || fullName.split(' ').length < 2) { showLoginError('registerError', 'Введите ФИО полностью'); return; } 
     if (!phone || phone.length < 5) { showLoginError('registerError', 'Введите корректный телефон'); return; } 
     if (!departmentId) { showLoginError('registerError', 'Выберите отдел'); return; } 
     if (!/^\d{4}$/.test(pin)) { showLoginError('registerError', 'Пин-код должен содержать 4 цифры'); return; } 
     if (pin !== pinConfirm) { showLoginError('registerError', 'Пин-коды не совпадают'); return; } 
     if (state.users.some(u => u.phone === phone)) { showLoginError('registerError', 'Телефон уже зарегистрирован'); return; } 
-    const newUser = { id: 'user-' + Date.now(), fullName, phone, pin, role: 'staff', departmentId, createdAt: new Date().toISOString() }; 
+    
+    // Создаём нового пользователя
+    const newUser = { 
+        id: 'user-' + Date.now(), 
+        fullName, 
+        phone, 
+        pin, 
+        role: 'staff', 
+        departmentId, 
+        createdAt: new Date().toISOString() 
+    }; 
+    
+    // Добавляем в массив
     state.users.push(newUser);
+    
+    // ✅ Устанавливаем текущего пользователя
     CURRENT_USER_ID = newUser.id;
     state.session = { userId: newUser.id, loginAt: new Date().toISOString() };
+    
+    // ✅ Сохраняем в localStorage СРАЗУ (синхронно)
     localStorage.setItem('hd_users', JSON.stringify(state.users));
     localStorage.setItem('hd_session', JSON.stringify(state.session));
+    
+    // ✅ Показываем приветствие
+    toast('✅ Регистрация успешна! Добро пожаловать, ' + fullName.split(' ')[0] + '!');
+    
+    // ✅ Пытаемся сохранить в Firebase (асинхронно, не блокируя вход)
     if (typeof window.saveToFirebase === 'function') {
-        window.saveToFirebase().then(() => {
-            toast('✅ Регистрация успешна! Добро пожаловать, ' + fullName.split(' ')[0] + '!');
-            showApp();
-        }).catch(err => {
+        window.saveToFirebase().catch(err => {
             console.error('Ошибка Firebase:', err);
-            toast('⚠️ Регистрация успешна, но данные не сохранены в облаке');
-            showApp();
         });
-    } else {
-        toast('✅ Регистрация успешна! Добро пожаловать, ' + fullName.split(' ')[0] + '!');
-        showApp();
     }
+    
+    // ✅ СРАЗУ показываем приложение
+    showApp();
 }
 
 function doLogout() { if (!confirm('Выйти из системы?')) return; state.session = null; CURRENT_USER_ID = null; selectedLoginUserId = null; selectedTicketId = null; save(); document.getElementById('loginPin').value = ''; showLogin(); }
@@ -842,7 +862,6 @@ function confirmPostpone() {
     closeModal('postponeModal'); 
     toast('⏸ Заявка отложена'); 
     renderTickets(); 
-    // ✅ Закрываем модалку заявки после отложения
     if (document.getElementById('ticketViewModal').classList.contains('active')) {
         closeTicketModal();
     }
