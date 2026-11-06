@@ -32,7 +32,6 @@
         settings: state.settings, updatedAt: new Date().toISOString()
       }, { merge: true });
       lastSavedAt = Date.now();
-      console.log('✅ Данные сохранены в Firebase');
     } catch (e) { console.error("Ошибка Firebase:", e); }
     finally { isSaving = false; }
   };
@@ -43,17 +42,19 @@
 
     if (docSnap.exists()) {
       const data = docSnap.data();
-      if (data.users && data.users.length > 0) {
-        state.users = data.users;
-      } else {
-        state.users = JSON.parse(localStorage.getItem('hd_users')) || [];
-      }
+      if (data.users && data.users.length > 0) state.users = data.users;
+      else state.users = JSON.parse(localStorage.getItem('hd_users')) || [];
       state.departments = data.departments || JSON.parse(localStorage.getItem('hd_departments')) || [];
       state.clients = data.clients || JSON.parse(localStorage.getItem('hd_clients')) || [];
       state.companies = data.companies || JSON.parse(localStorage.getItem('hd_companies')) || [];
       state.tickets = data.tickets || JSON.parse(localStorage.getItem('hd_tickets')) || [];
       state.categories = data.categories || JSON.parse(localStorage.getItem('hd_categories')) || [];
-      state.settings = data.settings || JSON.parse(localStorage.getItem('hd_settings')) || { theme: 'light', companyName: 'Ярмарка CRM' };
+      state.settings = data.settings || JSON.parse(localStorage.getItem('hd_settings')) || { 
+        theme: 'light', 
+        companyName: 'Ярмарка CRM',
+        autoArchiveHours: 24,
+        soundEnabled: true
+      };
     } else {
       seedData();
       await window.saveToFirebase();
@@ -87,6 +88,7 @@
 
     if (state.settings.theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
     checkAuth();
+    startAutoArchive();
   };
 </script>
 <style>
@@ -160,9 +162,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .btn-info { background: var(--info); color: white; border-color: var(--info); }
 .btn-ghost { background: transparent; border-color: transparent; color: var(--text-light); }
 .btn-small { padding: 4px 9px; font-size: 12px; }
-.tickets-layout { display: flex; flex: 1; overflow: hidden; }
-.tickets-list-panel { width: 42%; border-right: 1px solid var(--border); background: var(--card); display: flex; flex-direction: column; overflow: hidden; }
-.tickets-detail-panel { flex: 1; background: var(--bg); overflow-y: auto; }
+.tickets-layout { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+.tickets-list-panel { width: 100%; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 .tickets-filters { padding: 10px 15px; border-bottom: 1px solid var(--border); background: var(--card); }
 .filter-tabs { display: flex; gap: 3px; margin-bottom: 8px; flex-wrap: wrap; }
 .filter-tab { padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; color: var(--text-light); display: flex; align-items: center; gap: 5px; }
@@ -172,10 +173,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .filter-tab.active .count { background: var(--primary); color: white; }
 .filter-row { display: flex; gap: 6px; flex-wrap: wrap; }
 .filter-row select { padding: 5px 8px; border: 1px solid var(--border); border-radius: 5px; font-size: 12px; background: var(--card); color: var(--text); }
-.tickets-list { flex: 1; overflow-y: auto; }
-.ticket-item { padding: 12px 15px; border-bottom: 1px solid var(--border); cursor: pointer; display: flex; gap: 10px; }
+.tickets-list { flex: 1; overflow-y: auto; padding: 10px; }
+.ticket-item { padding: 12px 15px; border-bottom: 1px solid var(--border); cursor: pointer; display: flex; gap: 10px; background: var(--card); border-radius: 6px; margin-bottom: 8px; }
 .ticket-item:hover { background: var(--bg); }
-.ticket-item.active { background: var(--primary-light); border-left: 3px solid var(--primary); padding-left: 12px; }
+.ticket-item.active { background: var(--primary-light); border-left: 3px solid var(--primary); }
 .ticket-item.is-recurring-template { border-left: 3px solid #8b5cf6; }
 .ticket-priority-bar { width: 3px; border-radius: 2px; }
 .priority-low { background: #9ca3af; } .priority-medium { background: #3b82f6; }
@@ -194,7 +195,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .status-solved { background: #a7f3d0; color: #064e3b; font-weight: 600; }
 .status-closed { background: #e5e7eb; color: #374151; }
 .recurring-indicator { background: #ede9fe; color: #6b21a8; font-size: 10px; padding: 1px 6px; border-radius: 8px; font-weight: 600; }
-.ticket-detail-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); padding: 40px; text-align: center; }
+.empty-state { text-align: center; padding: 50px 20px; color: var(--text-muted); }
 .empty-icon { font-size: 60px; margin-bottom: 15px; opacity: 0.3; }
 .conversation { background: var(--card); border-radius: 8px; border: 1px solid var(--border); padding: 15px; }
 .conversation-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
@@ -275,7 +276,6 @@ tr:last-child td { border-bottom: none; }
 tr:hover td { background: var(--bg); }
 .actions-cell { display: flex; gap: 4px; }
 .avatar-small { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #34d399); color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; margin-right: 6px; }
-.empty-state { text-align: center; padding: 50px 20px; color: var(--text-muted); }
 .settings-layout { display: grid; grid-template-columns: 220px 1fr; gap: 20px; flex: 1; overflow: hidden; }
 .settings-nav { background: var(--card); border-right: 1px solid var(--border); padding: 15px; overflow-y: auto; }
 .settings-nav-item { padding: 8px 12px; cursor: pointer; border-radius: 5px; font-size: 13px; margin-bottom: 3px; }
@@ -306,6 +306,12 @@ tr:hover td { background: var(--bg); }
 .role-admin { background: #fef3c7; color: #92400e; }
 .role-staff { background: #dbeafe; color: #1e40af; }
 .dept-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 500; }
+.status-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; padding: 15px; background: var(--card); border-bottom: 1px solid var(--border); }
+.status-card { padding: 12px; border-radius: 8px; cursor: pointer; transition: all 0.15s; border: 2px solid transparent; text-align: center; }
+.status-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.status-card.active { border-color: var(--primary); background: var(--primary-light); }
+.status-card .count { font-size: 24px; font-weight: 700; color: var(--primary-dark); margin-bottom: 4px; }
+.status-card .label { font-size: 11px; color: var(--text-light); text-transform: uppercase; }
 </style>
 </head>
 <body>
@@ -370,17 +376,8 @@ tr:hover td { background: var(--bg); }
     <div class="topbar"><div class="topbar-title">📥 Заявки</div><div class="topbar-actions"><div class="search-global"><input type="text" id="globalSearch" placeholder="Поиск..." oninput="renderTickets()"></div><button class="btn btn-primary" onclick="openTicketModal()">+ Новая заявка</button></div></div>
     <div class="tickets-layout">
       <div class="tickets-list-panel">
+        <div class="status-cards" id="statusCards"></div>
         <div class="tickets-filters">
-          <div class="filter-tabs" id="filterTabs">
-            <div class="filter-tab active" data-filter="all">Все <span class="count" id="countAll">0</span></div>
-            <div class="filter-tab" data-filter="mine">Мои <span class="count" id="countMine">0</span></div>
-            <div class="filter-tab admin-only" data-filter="unassigned">Неназначенные <span class="count" id="countUnassigned">0</span></div>
-            <div class="filter-tab" data-filter="new">Новые <span class="count" id="countNew">0</span></div>
-            <div class="filter-tab" data-filter="open">В работе <span class="count" id="countOpen">0</span></div>
-            <div class="filter-tab" data-filter="pending">Ожидание <span class="count" id="countPending">0</span></div>
-            <div class="filter-tab" data-filter="solved">Решённые <span class="count" id="countSolved">0</span></div>
-            <div class="filter-tab admin-only" data-filter="recurring">🔁 Повторяющиеся <span class="count" id="countRecurring">0</span></div>
-          </div>
           <div class="filter-row">
             <select id="filterPriority" onchange="renderTickets()"><option value="">Приоритет</option><option value="low">Низкий</option><option value="medium">Средний</option><option value="high">Высокий</option><option value="urgent">Срочный</option></select>
             <select id="filterCategory" onchange="renderTickets()"><option value="">Категория</option></select>
@@ -390,7 +387,6 @@ tr:hover td { background: var(--bg); }
         </div>
         <div class="tickets-list" id="ticketsList"></div>
       </div>
-      <div class="tickets-detail-panel" id="ticketDetail"><div class="ticket-detail-empty"><div class="empty-icon">📥</div><h3>Выберите заявку</h3><p style="margin-top:8px;font-size:13px;color:var(--text-light)">Нажмите на заявку в списке, чтобы открыть её</p></div></div>
     </div>
   </div>
   <div class="page" id="page-recurring"><div class="topbar"><div class="topbar-title">🔁 Повторяющиеся заявки</div><div class="topbar-actions"><button class="btn btn-primary" onclick="openTicketModal()">+ Создать шаблон</button></div></div><div class="page-content"><div style="margin-bottom:15px;padding:12px;background:linear-gradient(135deg, #f5f3ff, #ede9fe);border-radius:8px;font-size:12px;color:#6b21a8;border-left:3px solid #8b5cf6">🔁 Шаблоны повторяющихся заявок</div><div id="recurringList"></div></div></div>
@@ -401,7 +397,7 @@ tr:hover td { background: var(--bg); }
   <div class="page" id="page-reports"><div class="topbar"><div class="topbar-title">📈 Отчёты</div></div><div class="reports-content" id="reportsContent"></div></div>
   <div class="page" id="page-departments"><div class="topbar"><div class="topbar-title">🏛 Отделы</div><div class="topbar-actions"><button class="btn btn-primary" onclick="openDepartmentModal()">+ Отдел</button></div></div><div class="page-content"><div id="departmentsList"></div></div></div>
   <div class="page" id="page-users"><div class="topbar"><div class="topbar-title">🔐 Пользователи</div></div><div class="page-content"><div style="margin-bottom:15px;padding:12px;background:#fef3c7;border-radius:8px;font-size:12px;color:#92400e;border-left:3px solid #f59e0b">🔐 Режим администратора</div><div class="card"><table><thead><tr><th>ФИО</th><th>Телефон</th><th>Отдел</th><th>Роль</th><th>Пин-код</th><th>Создан</th><th>Действия</th></tr></thead><tbody id="usersTable"></tbody></table></div></div></div>
-  <div class="page" id="page-settings"><div class="topbar"><div class="topbar-title">⚙️ Настройки</div></div><div class="settings-layout"><div class="settings-nav"><div class="settings-nav-item active" data-settings="profile">Мой профиль</div><div class="settings-nav-item admin-only" data-settings="general">Общие</div><div class="settings-nav-item admin-only" data-settings="categories">Категории</div><div class="settings-nav-item admin-only" data-settings="data">Данные</div></div><div class="settings-content" id="settingsContent"></div></div></div>
+  <div class="page" id="page-settings"><div class="topbar"><div class="topbar-title">⚙️ Настройки</div></div><div class="settings-layout"><div class="settings-nav"><div class="settings-nav-item active" data-settings="profile">Мой профиль</div><div class="settings-nav-item admin-only" data-settings="system">Система</div><div class="settings-nav-item admin-only" data-settings="categories">Категории</div><div class="settings-nav-item admin-only" data-settings="data">Данные</div></div><div class="settings-content" id="settingsContent"></div></div></div>
 </main>
 <div class="modal" id="ticketViewModal">
   <div class="modal-content ticket-modal-content">
@@ -421,9 +417,9 @@ tr:hover td { background: var(--bg); }
 <div class="modal" id="userModal"><div class="modal-content"><div class="modal-header"><div class="modal-title" id="userModalTitle">Редактировать</div><button class="close-btn" onclick="closeModal('userModal')">&times;</button></div><div class="modal-body"><form id="userForm" onsubmit="saveUser(event)"><input type="hidden" id="userId"><div class="form-group"><label>ФИО *</label><input type="text" id="userFullName" required></div><div class="form-group"><label>Телефон *</label><input type="tel" id="userPhone" required></div><div class="form-group"><label>Отдел</label><select id="userDepartment"></select></div><div class="form-group"><label>Роль</label><select id="userRole"><option value="staff">Сотрудник</option><option value="admin">Администратор</option></select></div><div class="form-group"><label>Новый пин-код (4 цифры)</label><input type="password" id="userPin" class="pin-input" maxlength="4" inputmode="numeric" placeholder="••••"></div></form></div><div class="modal-footer"><button class="btn" onclick="closeModal('userModal')">Отмена</button><button class="btn btn-primary" onclick="document.getElementById('userForm').requestSubmit()">Сохранить</button></div></div></div>
 <div class="toast" id="toast"></div>
 <script>
-let state = { users: JSON.parse(localStorage.getItem('hd_users')) || [], departments: JSON.parse(localStorage.getItem('hd_departments')) || [], clients: JSON.parse(localStorage.getItem('hd_clients')) || [], companies: JSON.parse(localStorage.getItem('hd_companies')) || [], tickets: JSON.parse(localStorage.getItem('hd_tickets')) || [], categories: JSON.parse(localStorage.getItem('hd_categories')) || [], settings: JSON.parse(localStorage.getItem('hd_settings')) || { theme: 'light', companyName: 'Ярмарка CRM' }, session: JSON.parse(localStorage.getItem('hd_session')) || null };
+let state = { users: JSON.parse(localStorage.getItem('hd_users')) || [], departments: JSON.parse(localStorage.getItem('hd_departments')) || [], clients: JSON.parse(localStorage.getItem('hd_clients')) || [], companies: JSON.parse(localStorage.getItem('hd_companies')) || [], tickets: JSON.parse(localStorage.getItem('hd_tickets')) || [], categories: JSON.parse(localStorage.getItem('hd_categories')) || [], settings: JSON.parse(localStorage.getItem('hd_settings')) || { theme: 'light', companyName: 'Ярмарка CRM', autoArchiveHours: 24, soundEnabled: true }, session: JSON.parse(localStorage.getItem('hd_session')) || null };
 let CURRENT_USER_ID = null, selectedTicketId = null, currentFilter = 'all', postponeTicketId = null, selectedLoginUserId = null;
-const STATUS_LABELS = { new: 'Новая', open: 'В работе', pending: 'Ожидание', solved: 'Решена', closed: 'Закрыта' };
+const STATUS_LABELS = { new: 'Новая', open: 'В работе', pending: 'Ожидание', solved: 'Решена', closed: 'Архив' };
 const PRIORITY_LABELS = { low: 'Низкий', medium: 'Средний', high: 'Высокий', urgent: 'Срочный' };
 const ROLE_LABELS = { admin: 'Администратор', staff: 'Сотрудник' };
 const PERIOD_FULL = { hourly: 'часов', daily: 'дней', weekly: 'недель', monthly: 'месяцев' };
@@ -468,6 +464,30 @@ document.querySelectorAll('.modal').forEach(m => { m.addEventListener('click', e
 
 function formatRecurrence(rec) { if (!rec || !rec.enabled) return ''; const periodText = PERIOD_FULL[rec.period] || rec.period; if (rec.interval === 1) { if (rec.period === 'hourly') return 'Каждый час'; if (rec.period === 'daily') return 'Ежедневно'; if (rec.period === 'weekly') return 'Еженедельно'; if (rec.period === 'monthly') return 'Ежемесячно'; } return `Каждые ${rec.interval} ${periodText}`; }
 function calculateNextRun(rec, fromDate) { const from = new Date(fromDate || rec.lastRunAt || rec.firstRunAt || Date.now()); const next = new Date(from); switch (rec.period) { case 'hourly': next.setHours(next.getHours() + rec.interval); break; case 'daily': next.setDate(next.getDate() + rec.interval); break; case 'weekly': next.setDate(next.getDate() + rec.interval * 7); break; case 'monthly': next.setMonth(next.getMonth() + rec.interval); break; } return next.toISOString(); }
+
+// ✅ АВТОАРХИВАЦИЯ РЕШЁННЫХ ЗАЯВОК
+function startAutoArchive() {
+  setInterval(() => {
+    const autoArchiveHours = state.settings.autoArchiveHours || 24;
+    const now = Date.now();
+    let archived = false;
+    state.tickets.forEach(t => {
+      if (t.status === 'solved' && t.resolvedAt) {
+        const resolvedTime = new Date(t.resolvedAt).getTime();
+        const hoursSinceResolved = (now - resolvedTime) / (1000 * 60 * 60);
+        if (hoursSinceResolved >= autoArchiveHours) {
+          t.status = 'closed';
+          t.updatedAt = new Date().toISOString();
+          archived = true;
+        }
+      }
+    });
+    if (archived) {
+      save();
+      if (document.getElementById('page-tickets').classList.contains('active')) renderTickets();
+    }
+  }, 60000); // Проверка каждую минуту
+}
 
 function processRecurringTickets() {
   const now = Date.now();
@@ -520,7 +540,6 @@ function selectLoginUser(id) { selectedLoginUserId = id; renderUserPicker(); doc
 
 function doLogin() { hideLoginError('loginError'); if (!selectedLoginUserId) { showLoginError('loginError', 'Выберите сотрудника'); return; } const pin = document.getElementById('loginPin').value; if (!/^\d{4}$/.test(pin)) { showLoginError('loginError', 'Пин-код должен содержать 4 цифры'); return; } const user = getUser(selectedLoginUserId); if (!user) { showLoginError('loginError', 'Пользователь не найден'); return; } if (user.pin !== pin) { showLoginError('loginError', 'Неверный пин-код'); return; } CURRENT_USER_ID = user.id; state.session = { userId: user.id, loginAt: new Date().toISOString() }; save(); toast('👋 Добро пожаловать, ' + user.fullName.split(' ')[0] + '!'); showApp(); }
 
-// ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ РЕГИСТРАЦИИ
 function doRegister() { 
     hideLoginError('registerError'); 
     const fullName = document.getElementById('regFullName').value.trim(); 
@@ -528,48 +547,22 @@ function doRegister() {
     const departmentId = document.getElementById('regDepartment').value; 
     const pin = document.getElementById('regPin').value; 
     const pinConfirm = document.getElementById('regPinConfirm').value; 
-    
-    // Валидация
     if (!fullName || fullName.split(' ').length < 2) { showLoginError('registerError', 'Введите ФИО полностью'); return; } 
     if (!phone || phone.length < 5) { showLoginError('registerError', 'Введите корректный телефон'); return; } 
     if (!departmentId) { showLoginError('registerError', 'Выберите отдел'); return; } 
     if (!/^\d{4}$/.test(pin)) { showLoginError('registerError', 'Пин-код должен содержать 4 цифры'); return; } 
     if (pin !== pinConfirm) { showLoginError('registerError', 'Пин-коды не совпадают'); return; } 
     if (state.users.some(u => u.phone === phone)) { showLoginError('registerError', 'Телефон уже зарегистрирован'); return; } 
-    
-    // Создаём нового пользователя
-    const newUser = { 
-        id: 'user-' + Date.now(), 
-        fullName, 
-        phone, 
-        pin, 
-        role: 'staff', 
-        departmentId, 
-        createdAt: new Date().toISOString() 
-    }; 
-    
-    // Добавляем в массив
+    const newUser = { id: 'user-' + Date.now(), fullName, phone, pin, role: 'staff', departmentId, createdAt: new Date().toISOString() }; 
     state.users.push(newUser);
-    
-    // ✅ Устанавливаем текущего пользователя
     CURRENT_USER_ID = newUser.id;
     state.session = { userId: newUser.id, loginAt: new Date().toISOString() };
-    
-    // ✅ Сохраняем в localStorage СРАЗУ (синхронно)
     localStorage.setItem('hd_users', JSON.stringify(state.users));
     localStorage.setItem('hd_session', JSON.stringify(state.session));
-    
-    // ✅ Показываем приветствие
-    toast('✅ Регистрация успешна! Добро пожаловать, ' + fullName.split(' ')[0] + '!');
-    
-    // ✅ Пытаемся сохранить в Firebase (асинхронно, не блокируя вход)
     if (typeof window.saveToFirebase === 'function') {
-        window.saveToFirebase().catch(err => {
-            console.error('Ошибка Firebase:', err);
-        });
+        window.saveToFirebase().catch(err => { console.error('Ошибка Firebase:', err); });
     }
-    
-    // ✅ СРАЗУ показываем приложение
+    toast('✅ Регистрация успешна! Добро пожаловать, ' + fullName.split(' ')[0] + '!');
     showApp();
 }
 
@@ -580,7 +573,39 @@ document.addEventListener('keydown', e => { if (e.key === 'Enter' && document.ge
 
 document.querySelectorAll('.nav-item').forEach(item => { item.addEventListener('click', () => { document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); item.classList.add('active'); const page = item.dataset.page; document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); document.getElementById('page-' + page).classList.add('active'); if (page === 'dashboard') renderDashboard(); if (page === 'clients') renderClients(); if (page === 'companies') renderCompanies(); if (page === 'staff') renderStaff(); if (page === 'reports') renderReports(); if (page === 'tickets') renderTickets(); if (page === 'recurring') renderRecurring(); if (page === 'departments') renderDepartments(); if (page === 'users') renderUsers(); if (page === 'settings') renderSettings(); }); });
 
-document.querySelectorAll('.filter-tab').forEach(tab => { tab.addEventListener('click', () => { document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active')); tab.classList.add('active'); currentFilter = tab.dataset.filter; renderTickets(); }); });
+// ✅ НОВЫЙ БЛОК С КАРТОЧКАМИ СТАТУСОВ
+function renderStatusCards() {
+  const visible = getVisibleTickets();
+  const all = visible.length;
+  const mine = visible.filter(t => t.assigneeId === CURRENT_USER_ID && !['solved','closed'].includes(t.status)).length;
+  const newCount = visible.filter(t => t.status === 'new').length;
+  const open = visible.filter(t => t.status === 'open').length;
+  const pending = visible.filter(t => t.status === 'pending').length;
+  const solved = visible.filter(t => t.status === 'solved').length;
+  const archived = visible.filter(t => t.status === 'closed').length;
+
+  const cards = [
+    { id: 'all', label: 'Все', count: all, icon: '📋' },
+    { id: 'mine', label: 'Мои', count: mine, icon: '👤' },
+    { id: 'new', label: 'Новые', count: newCount, icon: '🆕' },
+    { id: 'open', label: 'В работе', count: open, icon: '⚙️' },
+    { id: 'pending', label: 'Ожидание', count: pending, icon: '⏸' },
+    { id: 'solved', label: 'Решённые', count: solved, icon: '✅' },
+    { id: 'closed', label: 'Архив', count: archived, icon: '📦' }
+  ];
+
+  document.getElementById('statusCards').innerHTML = cards.map(c => `
+    <div class="status-card ${currentFilter === c.id ? 'active' : ''}" onclick="selectStatusFilter('${c.id}')">
+      <div class="count">${c.count}</div>
+      <div class="label">${c.icon} ${c.label}</div>
+    </div>
+  `).join('');
+}
+
+function selectStatusFilter(filter) {
+  currentFilter = filter;
+  renderTickets();
+}
 
 function populateFilters() {
     const currentCategory = document.getElementById('filterCategory').value;
@@ -616,22 +641,41 @@ function filterTickets() {
         let matchDepartment = true;
         if (department) { const assigneeUser = getUser(t.assigneeId); matchDepartment = assigneeUser && assigneeUser.departmentId === department; }
         let matchFilter = true;
-        if (currentFilter === 'mine') matchFilter = t.assigneeId === CURRENT_USER_ID;
-        else if (currentFilter === 'unassigned') matchFilter = !t.assigneeId;
+        if (currentFilter === 'all') matchFilter = true;
+        else if (currentFilter === 'mine') matchFilter = t.assigneeId === CURRENT_USER_ID;
         else if (currentFilter === 'new') matchFilter = t.status === 'new';
         else if (currentFilter === 'open') matchFilter = t.status === 'open';
         else if (currentFilter === 'pending') matchFilter = t.status === 'pending';
-        else if (currentFilter === 'solved') matchFilter = t.status === 'solved' || t.status === 'closed';
-        else if (currentFilter === 'recurring') matchFilter = t.recurrence && t.recurrence.enabled;
+        else if (currentFilter === 'solved') matchFilter = t.status === 'solved';
+        else if (currentFilter === 'closed') matchFilter = t.status === 'closed';
         return matchSearch && matchPriority && matchCategory && matchAssignee && matchDepartment && matchFilter;
     });
     filtered.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
     return filtered;
 }
 
-function updateCounts() { const visible = getVisibleTickets(); document.getElementById('countAll').textContent = visible.length; document.getElementById('countMine').textContent = visible.filter(t => t.assigneeId === CURRENT_USER_ID && !['solved','closed'].includes(t.status)).length; document.getElementById('countUnassigned').textContent = visible.filter(t => !t.assigneeId && !['solved','closed'].includes(t.status)).length; document.getElementById('countNew').textContent = visible.filter(t => t.status === 'new').length; document.getElementById('countOpen').textContent = visible.filter(t => t.status === 'open').length; document.getElementById('countPending').textContent = visible.filter(t => t.status === 'pending').length; document.getElementById('countSolved').textContent = visible.filter(t => t.status === 'solved' || t.status === 'closed').length; const recurringCount = visible.filter(t => t.recurrence && t.recurrence.enabled).length; document.getElementById('countRecurring').textContent = recurringCount; document.getElementById('navBadgeRecurring').textContent = recurringCount; document.getElementById('navBadgeTickets').textContent = visible.filter(t => t.status === 'new' || t.status === 'open').length; }
-
-function renderTickets() { updateCounts(); populateFilters(); const filtered = filterTickets(); const list = document.getElementById('ticketsList'); if (filtered.length === 0) { const msg = isAdmin() ? 'Нет заявок' : 'Нет назначенных вам заявок'; list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><p>${msg}</p></div>`; return; } list.innerHTML = filtered.map(t => { const client = getClient(t.clientId); const cat = getCategory(t.category); const assignee = getUser(t.assigneeId); const dep = assignee ? getDepartment(assignee.departmentId) : null; const lastComment = t.comments[t.comments.length - 1]; const preview = lastComment ? lastComment.text : t.description; const isRecurringTemplate = t.recurrence && t.recurrence.enabled; const isRecurringInstance = t.recurringParentId; return `<div class="ticket-item ${isRecurringTemplate ? 'is-recurring-template' : ''}" onclick="selectTicket('${t.id}')"><div class="ticket-priority-bar priority-${t.priority}"></div><div class="ticket-content"><div class="ticket-header"><span class="ticket-number">${isRecurringTemplate?'🔁 ':''}${isRecurringInstance?'📄 ':''}${t.number}</span><span class="ticket-time">${formatDate(t.updatedAt)}</span></div><div class="ticket-subject">${t.subject}</div><div class="ticket-preview">${preview}</div><div class="ticket-meta"><span class="badge-status status-${t.status}">${STATUS_LABELS[t.status]}</span>${cat ? `<span style="font-size:10px;color:${cat.color}">● ${cat.name}</span>` : ''}${isRecurringTemplate ? `<span class="recurring-indicator">🔁 ${formatRecurrence(t.recurrence)}</span>` : ''}${isRecurringInstance ? `<span class="recurring-indicator" style="background:#f3e8ff;color:#6b21a8">📄 Экземпляр</span>` : ''}${assignee ? `<span style="font-size:10px;color:var(--text-light)">🧑‍💼 ${assignee.fullName.split(' ')[0]}${dep ? ` <span class="dept-badge" style="background:${dep.color}22;color:${dep.color}">${dep.name}</span>` : ''}</span>` : '<span style="font-size:10px;color:var(--warning)">⚠ Не назначен</span>'}${client ? `<span style="font-size:10px;color:var(--text-light)">👤 ${client.name}</span>` : ''}</div></div></div>`; }).join(''); }
+function renderTickets() { 
+    renderStatusCards();
+    populateFilters(); 
+    const filtered = filterTickets(); 
+    const list = document.getElementById('ticketsList'); 
+    if (filtered.length === 0) { 
+        const msg = isAdmin() ? 'Нет заявок' : 'Нет назначенных вам заявок'; 
+        list.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>${msg}</p></div>`; 
+        return; 
+    } 
+    list.innerHTML = filtered.map(t => { 
+        const client = getClient(t.clientId); 
+        const cat = getCategory(t.category); 
+        const assignee = getUser(t.assigneeId); 
+        const dep = assignee ? getDepartment(assignee.departmentId) : null; 
+        const lastComment = t.comments[t.comments.length - 1]; 
+        const preview = lastComment ? lastComment.text : t.description; 
+        const isRecurringTemplate = t.recurrence && t.recurrence.enabled; 
+        const isRecurringInstance = t.recurringParentId; 
+        return `<div class="ticket-item ${isRecurringTemplate ? 'is-recurring-template' : ''}" onclick="selectTicket('${t.id}')"><div class="ticket-priority-bar priority-${t.priority}"></div><div class="ticket-content"><div class="ticket-header"><span class="ticket-number">${isRecurringTemplate?'🔁 ':''}${isRecurringInstance?'📄 ':''}${t.number}</span><span class="ticket-time">${formatDate(t.updatedAt)}</span></div><div class="ticket-subject">${t.subject}</div><div class="ticket-preview">${preview}</div><div class="ticket-meta"><span class="badge-status status-${t.status}">${STATUS_LABELS[t.status]}</span>${cat ? `<span style="font-size:10px;color:${cat.color}">● ${cat.name}</span>` : ''}${isRecurringTemplate ? `<span class="recurring-indicator">🔁 ${formatRecurrence(t.recurrence)}</span>` : ''}${isRecurringInstance ? `<span class="recurring-indicator" style="background:#f3e8ff;color:#6b21a8">📄 Экземпляр</span>` : ''}${assignee ? `<span style="font-size:10px;color:var(--text-light)">🧑‍💼 ${assignee.fullName.split(' ')[0]}${dep ? ` <span class="dept-badge" style="background:${dep.color}22;color:${dep.color}">${dep.name}</span>` : ''}</span>` : '<span style="font-size:10px;color:var(--warning)">⚠ Не назначен</span>'}${client ? `<span style="font-size:10px;color:var(--text-light)">👤 ${client.name}</span>` : ''}</div></div></div>`; 
+    }).join(''); 
+}
 
 function selectTicket(id) { const t = state.tickets.find(x => x.id === id); if (!t) return; if (!isAdmin() && t.assigneeId !== CURRENT_USER_ID) { toast('У вас нет доступа к этой заявке', 'error'); return; } selectedTicketId = id; openTicketViewModal(t); }
 
@@ -1009,16 +1053,84 @@ function renderReports() { const visible = getVisibleTickets(); const total = vi
 
 let currentSettingsTab = 'profile';
 document.querySelectorAll('.settings-nav-item').forEach(item => { item.addEventListener('click', () => { document.querySelectorAll('.settings-nav-item').forEach(i => i.classList.remove('active')); item.classList.add('active'); currentSettingsTab = item.dataset.settings; renderSettings(); }); });
-function renderSettings() { const c = document.getElementById('settingsContent'); if (currentSettingsTab === 'profile') { const u = getCurrentUser(); const dep = getDepartment(u.departmentId); c.innerHTML = `<div class="settings-section"><h3>👤 Мой профиль</h3><div style="display:flex;gap:15px;align-items:center;margin-bottom:20px;padding:15px;background:var(--bg);border-radius:8px"><div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#10b981,#34d399);color:white;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:600">${getInitials(u.fullName)}</div><div><div style="font-size:16px;font-weight:600">${u.fullName}</div><div style="font-size:12px;color:var(--text-light)">${u.phone}</div><div style="font-size:12px;color:var(--text-light);margin-top:3px">${dep ? dep.name : 'Без отдела'} • <span class="role-badge role-${u.role}">${ROLE_LABELS[u.role]}</span></div></div></div><div class="form-group"><label>ФИО</label><input type="text" id="profileFullName" value="${u.fullName}"></div><div class="form-group"><label>Телефон</label><input type="tel" id="profilePhone" value="${u.phone}"></div><div class="form-group"><label>Новый пин-код (4 цифры)</label><input type="password" id="profilePin" class="pin-input" maxlength="4" inputmode="numeric" placeholder="••••"></div><button class="btn btn-primary" onclick="saveProfile()">💾 Сохранить</button></div>`; } else if (currentSettingsTab === 'general' && isAdmin()) { c.innerHTML = `<div class="settings-section"><h3>🎪 Общие настройки</h3><div class="form-group"><label>Название компании</label><input type="text" id="setCompanyName" value="${state.settings.companyName || ''}"></div><div class="form-group"><label>Тема</label><select id="setTheme"><option value="light" ${state.settings.theme==='light'?'selected':''}>🌿 Светлая</option><option value="dark" ${state.settings.theme==='dark'?'selected':''}>🌑 Тёмная</option></select></div><button class="btn btn-primary" onclick="saveGeneralSettings()">💾 Сохранить</button></div>`; } else if (currentSettingsTab === 'categories' && isAdmin()) { c.innerHTML = `<div class="settings-section"><h3>📂 Категории</h3><div>${state.categories.map(cat => `<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;padding:8px;background:var(--bg);border-radius:6px"><input type="color" value="${cat.color}" onchange="updateCategory('${cat.id}','color',this.value)" style="width:40px;height:30px;border:none;cursor:pointer"><input type="text" value="${cat.name}" onchange="updateCategory('${cat.id}','name',this.value)" style="flex:1;padding:5px;border:1px solid var(--border);border-radius:4px;background:var(--card);color:var(--text)"><button class="btn btn-small btn-danger" onclick="deleteCategory('${cat.id}')">×</button></div>`).join('')}</div></div>`; } else if (currentSettingsTab === 'data' && isAdmin()) { c.innerHTML = `<div class="settings-section"><h3>💾 Данные</h3><div style="padding:12px;background:#fee2e2;border-radius:6px;color:#991b1b"><strong>⚠️ Опасная зона</strong><div style="margin-top:8px;display:flex;gap:10px"><button class="btn btn-danger btn-small" onclick="resetDemoData()">🔄 Сбросить всё</button></div></div></div>`; } else { c.innerHTML = `<div class="empty-state"><p>Нет доступа</p></div>`; } }
-function saveProfile() { const u = getCurrentUser(); u.fullName = document.getElementById('profileFullName').value; u.phone = document.getElementById('profilePhone').value; const newPin = document.getElementById('profilePin').value; if (newPin) { if (!/^\d{4}$/.test(newPin)) { toast('Пин должен быть 4 цифры', 'error'); return; } u.pin = newPin; } save(); renderCurrentUser(); toast('Профиль обновлён'); renderSettings(); }
-function saveGeneralSettings() { state.settings.companyName = document.getElementById('setCompanyName').value; state.settings.theme = document.getElementById('setTheme').value; document.documentElement.setAttribute('data-theme', state.settings.theme); save(); toast('Сохранено'); }
+function renderSettings() { 
+    const c = document.getElementById('settingsContent'); 
+    if (currentSettingsTab === 'profile') { 
+        const u = getCurrentUser(); 
+        const dep = getDepartment(u.departmentId); 
+        c.innerHTML = `<div class="settings-section"><h3>👤 Мой профиль</h3><div style="display:flex;gap:15px;align-items:center;margin-bottom:20px;padding:15px;background:var(--bg);border-radius:8px"><div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#10b981,#34d399);color:white;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:600">${getInitials(u.fullName)}</div><div><div style="font-size:16px;font-weight:600">${u.fullName}</div><div style="font-size:12px;color:var(--text-light)">${u.phone}</div><div style="font-size:12px;color:var(--text-light);margin-top:3px">${dep ? dep.name : 'Без отдела'} • <span class="role-badge role-${u.role}">${ROLE_LABELS[u.role]}</span></div></div></div><div class="form-group"><label>ФИО</label><input type="text" id="profileFullName" value="${u.fullName}"></div><div class="form-group"><label>Телефон</label><input type="tel" id="profilePhone" value="${u.phone}"></div><div class="form-group"><label>Новый пин-код (4 цифры)</label><input type="password" id="profilePin" class="pin-input" maxlength="4" inputmode="numeric" placeholder="••••"></div><button class="btn btn-primary" onclick="saveProfile()">💾 Сохранить</button></div>`; 
+    } else if (currentSettingsTab === 'system' && isAdmin()) { 
+        c.innerHTML = `
+            <div class="settings-section">
+                <h3>⚙️ Настройки системы</h3>
+                <div class="form-group">
+                    <label>Название компании</label>
+                    <input type="text" id="setCompanyName" value="${state.settings.companyName || ''}">
+                </div>
+                <div class="form-group">
+                    <label>Тема оформления</label>
+                    <select id="setTheme">
+                        <option value="light" ${state.settings.theme==='light'?'selected':''}>🌿 Светлая</option>
+                        <option value="dark" ${state.settings.theme==='dark'?'selected':''}>🌑 Тёмная</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Автоархивация решённых заявок (часы)</label>
+                    <input type="number" id="setAutoArchive" value="${state.settings.autoArchiveHours || 24}" min="1" max="720">
+                    <div class="form-hint">Заявки автоматически переносятся в архив через указанное время после решения</div>
+                </div>
+                <div class="form-group">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                        <input type="checkbox" id="setSoundEnabled" ${state.settings.soundEnabled !== false ? 'checked' : ''} style="width:auto">
+                        🔔 Звуковые уведомления
+                    </label>
+                    <div class="form-hint">Включить звуковые сигналы при новых событиях</div>
+                </div>
+                <button class="btn btn-primary" onclick="saveSystemSettings()">💾 Сохранить настройки</button>
+            </div>
+        `; 
+    } else if (currentSettingsTab === 'categories' && isAdmin()) { 
+        c.innerHTML = `<div class="settings-section"><h3>📂 Категории</h3><div>${state.categories.map(cat => `<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;padding:8px;background:var(--bg);border-radius:6px"><input type="color" value="${cat.color}" onchange="updateCategory('${cat.id}','color',this.value)" style="width:40px;height:30px;border:none;cursor:pointer"><input type="text" value="${cat.name}" onchange="updateCategory('${cat.id}','name',this.value)" style="flex:1;padding:5px;border:1px solid var(--border);border-radius:4px;background:var(--card);color:var(--text)"><button class="btn btn-small btn-danger" onclick="deleteCategory('${cat.id}')">×</button></div>`).join('')}</div></div>`; 
+    } else if (currentSettingsTab === 'data' && isAdmin()) { 
+        c.innerHTML = `<div class="settings-section"><h3>💾 Данные</h3><div style="padding:12px;background:#fee2e2;border-radius:6px;color:#991b1b"><strong>⚠️ Опасная зона</strong><div style="margin-top:8px;display:flex;gap:10px"><button class="btn btn-danger btn-small" onclick="resetDemoData()">🔄 Сбросить всё</button></div></div></div>`; 
+    } else { 
+        c.innerHTML = `<div class="empty-state"><p>Нет доступа</p></div>`; 
+    } 
+}
+
+function saveProfile() { 
+    const u = getCurrentUser(); 
+    u.fullName = document.getElementById('profileFullName').value; 
+    u.phone = document.getElementById('profilePhone').value; 
+    const newPin = document.getElementById('profilePin').value; 
+    if (newPin) { 
+        if (!/^\d{4}$/.test(newPin)) { toast('Пин должен быть 4 цифры', 'error'); return; } 
+        u.pin = newPin; 
+    } 
+    save(); 
+    renderCurrentUser(); 
+    toast('Профиль обновлён'); 
+    renderSettings(); 
+}
+
+function saveSystemSettings() {
+    state.settings.companyName = document.getElementById('setCompanyName').value;
+    state.settings.theme = document.getElementById('setTheme').value;
+    state.settings.autoArchiveHours = parseInt(document.getElementById('setAutoArchive').value) || 24;
+    state.settings.soundEnabled = document.getElementById('setSoundEnabled').checked;
+    document.documentElement.setAttribute('data-theme', state.settings.theme);
+    save();
+    toast('✅ Настройки системы сохранены');
+    renderSettings();
+}
+
 function updateCategory(id, field, value) { const c = getCategory(id); if (c) { c[field] = value; save(); } }
 function deleteCategory(id) { if (!confirm('Удалить?')) return; state.categories = state.categories.filter(c => c.id !== id); save(); renderSettings(); }
 function resetDemoData() { if (!confirm('Сбросить все данные?')) return; Object.keys(localStorage).filter(k => k.startsWith('hd_')).forEach(k => localStorage.removeItem(k)); location.reload(); }
 
 document.getElementById('ticketViewModal').addEventListener('click', function(e) { if (e.target === this) closeTicketModal(); });
 
-if (typeof window.initFirebase === 'function') window.initFirebase(); else { seedData(); if (state.settings.theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); checkAuth(); }
+if (typeof window.initFirebase === 'function') window.initFirebase(); else { seedData(); if (state.settings.theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); checkAuth(); startAutoArchive(); }
 setInterval(() => { if (CURRENT_USER_ID) processRecurringTickets(); }, 30000);
 setTimeout(() => { if (CURRENT_USER_ID) processRecurringTickets(); }, 3000);
 console.log('%c🎪 Ярмарка CRM + Firebase', 'color:#10b981;font-size:16px;font-weight:bold');
