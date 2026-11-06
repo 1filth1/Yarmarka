@@ -331,11 +331,9 @@ import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstat
 // ===== FIREBASE =====
 const firebaseConfig = {
   apiKey: "AIzaSyCrDBQkvL_ngTCaPxx_Gf3pdjpqkMwa4Fo",
-  authDomain: "https://yarmarka-4fd0f-default-rtdb.europe-west1.firebasedatabase.app
-",
+  authDomain: "yarmarka-4fd0f.firebaseapp.com",
   projectId: "yarmarka-4fd0f",
-  storageBucket: "https://yarmarka-4fd0f-default-rtdb.europe-west1.firebasedatabase.app"
-,
+  storageBucket: "yarmarka-4fd0f.firebasestorage.app",
   messagingSenderId: "182060849552",
   appId: "1:182060849552:web:3eb7a8a6fb4d700bb6fb15"
 };
@@ -490,8 +488,6 @@ function setRecurrencePreset(period, interval) { document.getElementById('recurr
 // ===== AUTH =====
 async function checkAuth() {
   console.log('🔐 Проверка авторизации...');
-  console.log('👥 Пользователей в базе:', state.users.length);
-  
   if (state.session && state.session.userId) {
     const user = getUser(state.session.userId);
     if (user) {
