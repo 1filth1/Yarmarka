@@ -426,7 +426,7 @@ function isAdmin() { const u = getCurrentUser(); return u && u.role === 'admin';
 function getInitials(name) { if (!name) return '?'; const parts = name.split(' ').filter(Boolean); if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase(); return parts[0].slice(0, 2).toUpperCase(); }
 function formatDate(iso) { if (!iso) return '—'; const d = new Date(iso); const diff = (Date.now() - d) / 1000; if (diff < 60) return 'только что'; if (diff < 3600) return Math.floor(diff/60) + ' мин'; if (diff < 86400) return Math.floor(diff/3600) + ' ч'; if (diff < 86400*7) return Math.floor(diff/86400) + ' дн'; return d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' }); }
 function formatDateTime(iso) { if (!iso) return '—'; return new Date(iso).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
-function toast(msg, type = 'success') { const t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast show ' + type; setTimeout(() => t.classList.remove('show'), 2500); }
+function toast(msg, type) { const t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast show ' + (type || 'success'); setTimeout(() => t.classList.remove('show'), 2500); }
 function openModal(id) { document.getElementById(id).classList.add('active'); }
 function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 document.querySelectorAll('.modal').forEach(m => { m.addEventListener('click', e => { if (e.target === m) m.classList.remove('active'); }); });
@@ -464,7 +464,7 @@ function processRecurringTickets() {
     if (t.recurrence.endDate && new Date(t.recurrence.endDate).getTime() < now) { t.recurrence.enabled = false; return; }
     if (t.recurrence.maxCount && t.recurrence.currentCount >= t.recurrence.maxCount) { t.recurrence.enabled = false; return; }
     const maxNum = state.tickets.reduce((m, x) => Math.max(m, parseInt(x.number.replace('HD-', ''))), 1000);
-    const newInstance = { id: 't' + Date.now() + Math.random().toString(36).slice(2,6), number: 'HD-' + (maxNum + 1), subject: t.subject, description: t.description, clientId: t.clientId, category: t.category, priority: t.priority, assigneeId: t.assigneeId, status: 'new', tags: [...(t.tags || [])], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), resolvedAt: null, postponeReason: '', recurringParentId: t.id, recurrence: null, comments: [{ id: 'cm' + Date.now(), authorId: 'system', authorType: 'system', text: '🔁 Автоматически создано из шаблона ' + t.number + '\nПериодичность: ' + formatRecurrence(t.recurrence) + '\nЭто экземпляр №' + ((t.recurrence.currentCount || 0) + 1), createdAt: new Date().toISOString() }], history: [{ action: 'created', at: new Date().toISOString(), by: 'system', details: 'Авто-создание' }] };
+    const newInstance = { id: 't' + Date.now() + Math.random().toString(36).slice(2,6), number: 'HD-' + (maxNum + 1), subject: t.subject, description: t.description, clientId: t.clientId, category: t.category, priority: t.priority, assigneeId: t.assigneeId, status: 'new', tags: [...(t.tags || [])], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), resolvedAt: null, postponeReason: '', recurringParentId: t.id, recurrence: null, comments: [{ id: 'cm' + Date.now(), authorId: 'system', authorType: 'system', text: '🔁 Автоматически создано из шаблона ' + t.number, createdAt: new Date().toISOString() }], history: [{ action: 'created', at: new Date().toISOString(), by: 'system', details: 'Авто-создание' }] };
     state.tickets.push(newInstance);
     t.recurrence.currentCount = (t.recurrence.currentCount || 0) + 1;
     t.recurrence.lastRunAt = new Date().toISOString();
@@ -472,7 +472,7 @@ function processRecurringTickets() {
     t.updatedAt = new Date().toISOString();
     t.history = t.history || [];
     t.history.push({ action: 'recurrence_fired', at: new Date().toISOString(), by: 'system', details: 'Создан экземпляр ' + newInstance.number });
-    t.comments.push({ id: 'cm' + Date.now() + 't', authorId: 'system', authorType: 'system', text: '🔁 Создан экземпляр: ' + newInstance.number + '\nСледующее: ' + formatDateTime(t.recurrence.nextRunAt), createdAt: new Date().toISOString() });
+    t.comments.push({ id: 'cm' + Date.now() + 't', authorId: 'system', authorType: 'system', text: '🔁 Создан экземпляр: ' + newInstance.number, createdAt: new Date().toISOString() });
     createdCount++;
     toast('🔁 Создан экземпляр ' + newInstance.number);
   });
@@ -526,7 +526,7 @@ async function doLogin() {
     const pin = document.getElementById('loginPin').value; 
     if (!/^\d{4}$/.test(pin)) { showLoginError('loginError', 'Пин-код должен содержать 4 цифры'); return; } 
     const user = getUser(selectedLoginUserId); 
-    console.log('🔍 Найден пользователь:', user ? user.fullName : 'НЕ НАЙДЕН', 'Пин:', user ? user.pin : '—', 'Введён:', pin);
+    console.log('🔍 Пользователь:', user ? user.fullName : 'НЕ НАЙДЕН', 'Пин:', user ? user.pin : '—', 'Введён:', pin);
     if (!user) { showLoginError('loginError', 'Пользователь не найден. Обновите страницу.'); return; } 
     if (user.pin !== pin) { showLoginError('loginError', 'Неверный пин-код'); return; } 
     CURRENT_USER_ID = user.id; 
@@ -995,6 +995,61 @@ function importData(event) {
 
 document.getElementById('ticketViewModal').addEventListener('click', function(e) { if (e.target === this) closeTicketModal(); });
 
+// ✅ ЭКСПОРТ ВСЕХ ФУНКЦИЙ В WINDOW
+window.switchLoginTab = switchLoginTab;
+window.selectLoginUser = selectLoginUser;
+window.doLogin = doLogin;
+window.doRegister = doRegister;
+window.doLogout = doLogout;
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.closeTicketModal = closeTicketModal;
+window.refreshTicketModal = refreshTicketModal;
+window.resolveTicketFromModal = resolveTicketFromModal;
+window.reopenTicketFromModal = reopenTicketFromModal;
+window.deleteTicketFromModal = deleteTicketFromModal;
+window.sendReplyFromModal = sendReplyFromModal;
+window.openPostponeModal = openPostponeModal;
+window.setPostponePreset = setPostponePreset;
+window.confirmPostpone = confirmPostpone;
+window.updateTicketField = updateTicketField;
+window.toggleRecurrence = toggleRecurrence;
+window.openTicketModal = openTicketModal;
+window.saveTicket = saveTicket;
+window.toggleRecurrenceConfig = toggleRecurrenceConfig;
+window.setRecurrencePreset = setRecurrencePreset;
+window.openClientModal = openClientModal;
+window.saveClient = saveClient;
+window.deleteClient = deleteClient;
+window.openCompanyModal = openCompanyModal;
+window.saveCompany = saveCompany;
+window.deleteCompany = deleteCompany;
+window.openDepartmentModal = openDepartmentModal;
+window.saveDepartment = saveDepartment;
+window.deleteDepartment = deleteDepartment;
+window.openUserModal = openUserModal;
+window.saveUser = saveUser;
+window.deleteUser = deleteUser;
+window.saveProfile = saveProfile;
+window.saveSystemSettings = saveSystemSettings;
+window.updateCategory = updateCategory;
+window.deleteCategory = deleteCategory;
+window.resetDemoData = resetDemoData;
+window.exportData = exportData;
+window.importData = importData;
+window.selectStatusFilter = selectStatusFilter;
+window.renderTickets = renderTickets;
+window.renderDashboard = renderDashboard;
+window.renderClients = renderClients;
+window.renderCompanies = renderCompanies;
+window.renderStaff = renderStaff;
+window.renderReports = renderReports;
+window.renderDepartments = renderDepartments;
+window.renderUsers = renderUsers;
+window.renderSettings = renderSettings;
+window.renderRecurring = renderRecurring;
+
+// ✅ ИНИЦИАЛИЗАЦИЯ
 async function initApp() {
   console.log('🚀 Инициализация приложения...');
   
@@ -1055,60 +1110,6 @@ async function initApp() {
   checkAuth();
   startAutoArchive();
 }
-
-// ✅ ДЕЛАЕМ ВСЕ ФУНКЦИИ ГЛОБАЛЬНЫМИ
-window.switchLoginTab = switchLoginTab;
-window.selectLoginUser = selectLoginUser;
-window.doLogin = doLogin;
-window.doRegister = doRegister;
-window.doLogout = doLogout;
-window.openModal = openModal;
-window.closeModal = closeModal;
-window.closeTicketModal = closeTicketModal;
-window.refreshTicketModal = refreshTicketModal;
-window.resolveTicketFromModal = resolveTicketFromModal;
-window.reopenTicketFromModal = reopenTicketFromModal;
-window.deleteTicketFromModal = deleteTicketFromModal;
-window.sendReplyFromModal = sendReplyFromModal;
-window.openPostponeModal = openPostponeModal;
-window.setPostponePreset = setPostponePreset;
-window.confirmPostpone = confirmPostpone;
-window.updateTicketField = updateTicketField;
-window.toggleRecurrence = toggleRecurrence;
-window.openTicketModal = openTicketModal;
-window.saveTicket = saveTicket;
-window.toggleRecurrenceConfig = toggleRecurrenceConfig;
-window.setRecurrencePreset = setRecurrencePreset;
-window.openClientModal = openClientModal;
-window.saveClient = saveClient;
-window.deleteClient = deleteClient;
-window.openCompanyModal = openCompanyModal;
-window.saveCompany = saveCompany;
-window.deleteCompany = deleteCompany;
-window.openDepartmentModal = openDepartmentModal;
-window.saveDepartment = saveDepartment;
-window.deleteDepartment = deleteDepartment;
-window.openUserModal = openUserModal;
-window.saveUser = saveUser;
-window.deleteUser = deleteUser;
-window.saveProfile = saveProfile;
-window.saveSystemSettings = saveSystemSettings;
-window.updateCategory = updateCategory;
-window.deleteCategory = deleteCategory;
-window.resetDemoData = resetDemoData;
-window.exportData = exportData;
-window.importData = importData;
-window.selectStatusFilter = selectStatusFilter;
-window.renderTickets = renderTickets;
-window.renderDashboard = renderDashboard;
-window.renderClients = renderClients;
-window.renderCompanies = renderCompanies;
-window.renderStaff = renderStaff;
-window.renderReports = renderReports;
-window.renderDepartments = renderDepartments;
-window.renderUsers = renderUsers;
-window.renderSettings = renderSettings;
-window.renderRecurring = renderRecurring;
 
 initApp();
 
